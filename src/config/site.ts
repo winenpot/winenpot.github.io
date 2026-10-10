@@ -6,9 +6,9 @@
 
 export const SITE = {
   url: 'https://winenpot.github.io',
-  name: 'Ashkan Ranjbar',
-  firstName: 'Ashkan',
-  lastName: 'Ranjbar',
+  name: 'Vincent Law',
+  firstName: 'Vincent',
+  lastName: 'Law',
   handle: 'winenpot',
   role: 'Applied mathematician · ML engineer',
   tagline:
@@ -16,7 +16,7 @@ export const SITE = {
   intro:
     'Applied-math graduate turned machine-learning engineer. I build LLM systems that think only when they must, pipelines that stay quiet at 3 a.m., and the occasional strange experiment with geometry and probability.',
   description:
-    'Writing, journal, work and live experiments of Ashkan Ranjbar — machine learning, mathematics, philosophy and geometry.',
+    'Writing, journal, work and live experiments of Vincent Law — machine learning, mathematics, philosophy and geometry.',
   location: 'Tehran, Iran',
   /** Shown as a tiny coordinate kicker on the home hero. */
   coords: 'N 35.70° · E 51.40°',
@@ -30,9 +30,9 @@ export const SITE = {
    * set src: '/me.jpg'. It is shown in greyscale and revealed in color
    * under the cursor.
    */
-  photo: { src: '', alt: 'Portrait of Ashkan Ranjbar' },
+  photo: { src: '', alt: 'Portrait of Vincent Law' },
   /** Second photo slot used on /about (same rules). */
-  aboutPhoto: { src: '', alt: 'Ashkan Ranjbar, at work' },
+  aboutPhoto: { src: '', alt: 'Vincent Law, at work' },
 
   hire: {
     headline: 'Have a problem worth modeling?',
@@ -47,7 +47,7 @@ export const SITE = {
       'FastAPI / React product engineering',
       'Technical leadership & mentoring',
     ],
-    emailSubject: 'Hello Ashkan — a project idea',
+    emailSubject: 'Hello Vincent — a project idea',
   },
 
   /** Contact links. Remove an entry to hide it everywhere. */

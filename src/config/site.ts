@@ -7,8 +7,8 @@
 export const SITE = {
   url: 'https://winenpot.github.io',
   name: 'Vincent Law',
-  firstName: 'Vincent',
-  lastName: 'Law',
+  firstName: 'Ashkan',
+  lastName: 'Ranjbar',
   handle: 'winenpot',
   role: 'Applied mathematician · ML engineer',
   tagline:
@@ -16,7 +16,7 @@ export const SITE = {
   intro:
     'Applied-math graduate turned machine-learning engineer. I build LLM systems that think only when they must, pipelines that stay quiet at 3 a.m., and the occasional strange experiment with geometry and probability.',
   description:
-    'Writing, journal, work and live experiments of Vincent Law — machine learning, mathematics, philosophy and geometry.',
+    'Writing, journal, work and live experiments of Ashkan — machine learning, mathematics, philosophy and geometry.',
   location: 'Tehran, Iran',
   /** Shown as a tiny coordinate kicker on the home hero. */
   coords: 'N 35.70° · E 51.40°',
@@ -30,9 +30,9 @@ export const SITE = {
    * set src: '/me.jpg'. It is shown in greyscale and revealed in color
    * under the cursor.
    */
-  photo: { src: '', alt: 'Portrait of Vincent Law' },
+  photo: { src: '', alt: 'Portrait of Ashkan' },
   /** Second photo slot used on /about (same rules). */
-  aboutPhoto: { src: '', alt: 'Vincent Law, at work' },
+  aboutPhoto: { src: '', alt: 'Ashkan, at work' },
 
   hire: {
     headline: 'Have a problem worth modeling?',

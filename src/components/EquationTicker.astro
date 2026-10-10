@@ -10,24 +10,37 @@ const lines = [
   '∇ · E = ρ / ε₀',
 ];
 ---
-<p class="eq kicker" aria-label={lines[0]} data-lines={JSON.stringify(lines)}><span class="eq__text">{lines[0]}</span><span class="eq__caret" aria-hidden="true"></span></p>
+<p class="eq kicker" aria-label={lines[0].replace(/[\^_]\{([^}]*)\}/g, '$1')} data-lines={JSON.stringify(lines)}><span class="eq__text" set:html={lines[0].replace(/\^\{([^}]*)\}/g, '<sup>$1</sup>')} /><span class="eq__caret" aria-hidden="true"></span></p>
 
 <script>
   document.querySelectorAll<HTMLElement>('.eq').forEach((el) => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const lines: string[] = JSON.parse(el.dataset.lines!);
+    // "a^{b}" → tokens; superscript runs are wrapped in <sup> as they type
+    type Tok = { c: string; sup: boolean };
+    const parse = (s: string): Tok[] => {
+      const out: Tok[] = []; let sup = false;
+      for (let i = 0; i < s.length; i++) {
+        if (s[i] === '^' && s[i + 1] === '{') { sup = true; i++; continue; }
+        if (sup && s[i] === '}') { sup = false; continue; }
+        out.push({ c: s[i], sup });
+      }
+      return out;
+    };
+    const esc = (c: string) => c.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const html = (ts: Tok[]) => ts.map((t, i) => (t.sup && !ts[i - 1]?.sup ? '<sup>' : '') + esc(t.c) + (t.sup && !ts[i + 1]?.sup ? '</sup>' : '')).join('');
+    const lines: Tok[][] = (JSON.parse(el.dataset.lines!) as string[]).map(parse);
     const out = el.querySelector('.eq__text')!;
     let i = 0;
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     (async () => {
       await sleep(3200);
       for (;;) {
-        const cur = [...lines[i]];
-        for (let k = cur.length; k >= 0; k--) { out.textContent = cur.slice(0, k).join(''); await sleep(22); }
+        const cur = lines[i];
+        for (let k = cur.length; k >= 0; k--) { out.innerHTML = html(cur.slice(0, k)); await sleep(22); }
         i = (i + 1) % lines.length;
-        const next = [...lines[i]];
-        el.setAttribute('aria-label', lines[i]);
-        for (let k = 0; k <= next.length; k++) { out.textContent = next.slice(0, k).join(''); await sleep(55 + Math.random() * 40); }
+        const next = lines[i];
+        el.setAttribute('aria-label', next.map((t) => t.c).join(''));
+        for (let k = 0; k <= next.length; k++) { out.innerHTML = html(next.slice(0, k)); await sleep(55 + Math.random() * 40); }
         await sleep(3400);
       }
     })();
@@ -35,6 +48,7 @@ const lines = [
 </script>
 
 <style>
+  .eq :global(sup) { font-size: 0.7em; line-height: 0; }
   .eq { color: var(--lavender); font-size: 0.95rem; min-height: 1.6em; letter-spacing: 0.02em; }
   .eq__caret { display: inline-block; width: 0.55em; height: 1.05em; vertical-align: -0.15em; margin-left: 2px; background: var(--starlight); animation: blink 1.05s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }

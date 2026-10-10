@@ -55,6 +55,7 @@ const latestJournal = journal[0];
           <li>
             <time class="kicker">{fmtDate(p.data.date)}</time>
             <span class="latest__title">{p.data.title}</span>
+            <span class="muted latest__desc">{p.data.description}</span>
           </li>
         ))}
       </ol>
@@ -83,6 +84,10 @@ const latestJournal = journal[0];
         <>
           <div class="lab__slots" aria-hidden="true"><span></span><span></span><span></span></div>
           <p class="muted">{t('lab.empty')}</p>
+          <ul class="chips lab__kinds" role="list">
+            {['Hugging Face Spaces', 'Gradio', 'Streamlit', 'Render APIs'].map((k) => <li class="chip">{k}</li>)}
+          </ul>
+          <p class="lab__clock kicker" aria-hidden="true">cold start <Seg value={0} /> s</p>
         </>
       )}
     </Card>
@@ -158,6 +163,7 @@ const latestJournal = journal[0];
   .latest__list li { display: grid; gap: 2px; padding-bottom: var(--s1); border-bottom: 1px dashed var(--line); }
   .latest__list li:last-child { border: 0; }
   .latest__title { font-size: var(--step-1); line-height: 1.25; color: var(--pearl); }
+  .latest__desc { font-size: 0.95rem; }
 
   .now__list { padding-left: 1.1em; display: grid; gap: 10px; color: var(--ink-soft); font-size: 0.98rem; }
   .now__list li::marker { content: '✦  '; color: var(--mauve); }
@@ -171,6 +177,9 @@ const latestJournal = journal[0];
   .lab__slots span:nth-child(2)::after { animation-delay: 0.4s; } .lab__slots span:nth-child(3)::after { animation-delay: 0.8s; }
   @keyframes scan { to { transform: translateX(100%); } }
   .lab__list { display: grid; gap: 8px; padding: 0; }
+  .lab__kinds { margin-top: auto; }
+  .lab__clock { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+  .lab__clock :global(.seg) { font-size: 1.4rem; }
   .lab__list li { display: flex; gap: 10px; align-items: center; }
   .pulse { width: 8px; height: 8px; border-radius: 50%; background: #8ef0c0; box-shadow: 0 0 0 0 #8ef0c066; animation: pulse 2s infinite; }
   @keyframes pulse { to { box-shadow: 0 0 0 10px #8ef0c000; } }

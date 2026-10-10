@@ -41,8 +41,8 @@ const active = (href: string) => path === href || path.startsWith(href);
   .nav__brand:hover .nav__mark { transform: rotate(-137.5deg); }
   .nav__name { font-family: var(--font-display); font-size: 1.25rem; font-variation-settings: 'opsz' 72, 'SOFT' 100; letter-spacing: -0.01em; }
   .nav__name em { font-weight: 300; color: var(--lavender); }
-  .nav__links { grid-area: links; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; justify-content: flex-start; }
-  @media (min-width: 900px) { .nav__links { justify-content: center; } }
+  .nav__links { grid-area: links; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; justify-content: flex-start; -webkit-mask: linear-gradient(to right, #000 85%, transparent); mask: linear-gradient(to right, #000 85%, transparent); }
+  @media (min-width: 900px) { .nav__links { justify-content: center; -webkit-mask: none; mask: none; } }
   .nav__links a {
     font-family: var(--font-mono); font-size: 0.9rem; color: var(--ink-soft); text-decoration: none;
     padding: 10px 14px; border-radius: 999px; white-space: nowrap; transition: color 200ms, background 200ms;

@@ -34,7 +34,7 @@
   --ink-mute: #8d90bd;
 
   /* surfaces */
-  --glass: color-mix(in oklab, var(--night-2) 72%, transparent);
+  --glass: color-mix(in oklab, var(--night-2) 58%, transparent);
   --glass-strong: color-mix(in oklab, var(--night-2) 90%, transparent);
   --line: color-mix(in oklab, var(--lavender) 22%, transparent);
   --line-strong: color-mix(in oklab, var(--lavender) 45%, transparent);

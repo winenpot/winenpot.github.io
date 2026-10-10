@@ -1,0 +1,35 @@
+---
+import Base from '../../layouts/Base.astro';
+import Card from '../../components/Card.astro';
+import DemoEmbed from '../../components/DemoEmbed.astro';
+import { getLab } from '../../lib/content';
+import { t } from '../../i18n/ui';
+const demos = await getLab();
+---
+<Base title="Lab" description="Live experiments: Hugging Face Spaces, Gradio, Streamlit and APIs, running right on the page.">
+  <header class="page-head">
+    <p class="kicker">live experiments · {demos.length}</p>
+    <h1><span class="wave-underline">Lab</span></h1>
+    <p>Things you can poke. Every demo runs live — press “wake it up” and give a sleepy free server a few seconds.</p>
+  </header>
+  <div class="bento">
+    {demos.length ? demos.map((d) => <DemoEmbed demo={d} />) : (
+      <Card tone="violet" span="m6 l12" label="workbench" class="empty">
+        <div class="empty__slots" aria-hidden="true">
+          {['huggingface', 'gradio', 'streamlit', 'api'].map((k) => <span><i></i>{k}</span>)}
+        </div>
+        <p class="empty__text">{t('lab.empty')}</p>
+      </Card>
+    )}
+  </div>
+</Base>
+
+<style>
+  .empty { padding-block: var(--s5); gap: var(--s3); }
+  .empty__slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s1); }
+  .empty__slots span { display: flex; gap: 10px; align-items: center; padding: var(--s2); border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink-mute); }
+  .empty__slots i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-mute); animation: sleep 2.4s ease-in-out infinite; }
+  .empty__slots span:nth-child(2) i { animation-delay: .6s; } .empty__slots span:nth-child(3) i { animation-delay: 1.2s; } .empty__slots span:nth-child(4) i { animation-delay: 1.8s; }
+  @keyframes sleep { 50% { background: var(--violet); box-shadow: 0 0 12px var(--violet); } }
+  .empty__text { max-width: 60ch; font-size: var(--step-1); font-weight: 300; font-style: italic; color: var(--pearl); }
+</style>

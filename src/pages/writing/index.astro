@@ -1,0 +1,50 @@
+---
+import Base from '../../layouts/Base.astro';
+import Card from '../../components/Card.astro';
+import { getWriting, fmtDate, readingTime } from '../../lib/content';
+import { t } from '../../i18n/ui';
+const posts = await getWriting();
+const tags = [...new Set(posts.flatMap((p) => p.data.tags))].sort();
+---
+<Base title="Writing" description="Essays on machine learning, mathematics, systems and philosophy.">
+  <header class="page-head">
+    <p class="kicker">essays · {posts.length}</p>
+    <h1><span class="wave-underline">Writing</span></h1>
+    <p>Long-form notes on machine learning, mathematics, systems and the occasional philosophical detour.</p>
+  </header>
+  {tags.length > 1 && (
+    <div class="filters chips" role="group" aria-label="Filter by tag">
+      <button class="chip" aria-pressed="true" data-tag="">{t('all.tags')}</button>
+      {tags.map((x) => <button class="chip" aria-pressed="false" data-tag={x}>#{x}</button>)}
+    </div>
+  )}
+  <div class="bento posts">
+    {posts.map((p, i) => (
+      <Card tone={(['lavender', 'periwinkle', 'mauve', 'violet'] as const)[i % 4]} span={i === 0 ? 'm6 l8' : 'm3 l4'} href={`/writing/${p.id}/`} class="post" >
+        <div data-tags={p.data.tags.join(' ')} class="post__inner">
+          <p class="kicker">{fmtDate(p.data.date)} · {readingTime(p.body)} {t('post.minutes')}</p>
+          <h2>{p.data.title}</h2>
+          <p class="muted">{p.data.description}</p>
+          {p.data.sample && <span class="sample-banner">sample</span>}
+        </div>
+      </Card>
+    ))}
+  </div>
+</Base>
+
+<script>
+  const btns = document.querySelectorAll<HTMLButtonElement>('.filters [data-tag]');
+  btns.forEach((b) => b.addEventListener('click', () => {
+    btns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    document.querySelectorAll<HTMLElement>('.post__inner').forEach((p) => {
+      const card = p.closest<HTMLElement>('.post')!;
+      card.hidden = !!b.dataset.tag && !p.dataset.tags!.split(' ').includes(b.dataset.tag!);
+    });
+  }));
+</script>
+
+<style>
+  .filters { margin-bottom: var(--s3); }
+  .post h2 { font-size: var(--step-2); }
+  .post__inner { display: grid; gap: var(--s1); }
+</style>

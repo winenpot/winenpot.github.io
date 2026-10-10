@@ -1,0 +1,59 @@
+---
+import '@fontsource-variable/fraunces/full.css';
+import '@fontsource-variable/fraunces/full-italic.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import 'katex/dist/katex.min.css';
+import '../styles/tokens.css';
+import '../styles/global.css';
+import { SITE } from '../config/site';
+import { LOCALES, DEFAULT_LOCALE, type Locale } from '../i18n/locales';
+import Sky from '../components/Sky.astro';
+import Nav from '../components/Nav.astro';
+import Shore from '../components/Shore.astro';
+import FloatingFigures from '../components/FloatingFigures.astro';
+import HireDialog from '../components/HireDialog.astro';
+
+interface Props { title?: string; description?: string; image?: string; locale?: Locale; type?: 'website' | 'article' }
+const { title, description = SITE.description, image = '/og.png', locale = DEFAULT_LOCALE, type = 'website' } = Astro.props;
+const fullTitle = title ? `${title} · ${SITE.name}` : `${SITE.name} — ${SITE.role}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const loc = LOCALES[locale];
+---
+<!doctype html>
+<html lang={loc.htmlLang} dir={loc.dir}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${SITE.name} — writing`} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#10132b" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(image, Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="sr-only" href="#main">Skip to content</a>
+    <Sky />
+    <FloatingFigures />
+    <Nav />
+    <main id="main" class="page">
+      <slot />
+    </main>
+    <Shore />
+    <HireDialog />
+  </body>
+</html>
+
+<style is:global>
+  body { position: relative; }
+  .sr-only:focus { position: fixed; top: 8px; left: 8px; width: auto; height: auto; clip: auto; padding: 8px 14px; background: var(--starlight); color: var(--night-0); z-index: 100; border-radius: 8px; }
+</style>

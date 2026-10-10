@@ -1,0 +1,39 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Prose from '../../layouts/Prose.astro';
+import { getWork, fmtMonth } from '../../lib/content';
+import { t } from '../../i18n/ui';
+export async function getStaticPaths() {
+  const all = await getWork();
+  return all.map((w, i) => ({ params: { slug: w.id }, props: { item: w, prev: all[i + 1], next: all[i - 1] } }));
+}
+const { item, prev, next } = Astro.props;
+const { Content } = await render(item);
+const d = item.data;
+---
+<Base title={`${d.title} — ${d.org}`} description={d.summary} type="article">
+  <Prose
+    kicker={`${d.org} · ${d.role} · ${fmtMonth(d.start)} – ${d.end ? fmtMonth(d.end) : 'now'}`}
+    title={d.title}
+    lede={d.summary}
+    tags={d.tags}
+    back={{ href: '/work/', label: t('work.back') }}
+    prev={prev && { href: `/work/${prev.id}/`, label: prev.data.org }}
+    next={next && { href: `/work/${next.id}/`, label: next.data.org }}
+  >
+    {d.metrics.length > 0 && (
+      <dl class="metrics" slot="head">
+        {d.metrics.map((m) => <div><dd>{m.value}</dd><dt>{m.label}</dt></div>)}
+      </dl>
+    )}
+    <Content />
+  </Prose>
+</Base>
+
+<style>
+  .metrics { display: flex; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s1); }
+  .metrics div { display: grid; gap: 2px; }
+  .metrics dd { margin: 0; font-family: var(--font-mono); font-size: 1.9rem; color: var(--starlight); }
+  .metrics dt { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-mute); }
+</style>

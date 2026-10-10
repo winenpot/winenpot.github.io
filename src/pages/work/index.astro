@@ -1,0 +1,38 @@
+---
+import Base from '../../layouts/Base.astro';
+import Card from '../../components/Card.astro';
+import Timeline from '../../components/Timeline.astro';
+import { getWork, fmtMonth } from '../../lib/content';
+const work = await getWork();
+const tones = ['lavender', 'periwinkle', 'mauve', 'violet', 'starlight', 'cobalt'] as const;
+---
+<Base title="Work" description="Case studies: LLM systems, MLOps, forecasting and product engineering.">
+  <header class="page-head">
+    <p class="kicker">case studies · {work.length}</p>
+    <h1><span class="wave-underline">Work</span></h1>
+    <p>Six roles, one thread: using math to make software that decides well.</p>
+  </header>
+  <div class="bento">
+    <Card tone="periwinkle" span="m6 l12" label="the wave so far"><Timeline items={work} /></Card>
+    {work.map((w, i) => (
+      <Card tone={tones[i % tones.length]} span={w.data.featured ? 'm6 l6' : 'm3 l4'} href={`/work/${w.id}/`} label={w.data.org} class="case">
+        <p class="kicker">{w.data.role} · {fmtMonth(w.data.start)} – {w.data.end ? fmtMonth(w.data.end) : 'now'}</p>
+        <h2>{w.data.title}</h2>
+        <p class="muted">{w.data.summary}</p>
+        {w.data.metrics.length > 0 && (
+          <dl class="metrics">
+            {w.data.metrics.map((m) => <div><dd>{m.value}</dd><dt>{m.label}</dt></div>)}
+          </dl>
+        )}
+      </Card>
+    ))}
+  </div>
+</Base>
+
+<style>
+  .case h2 { font-size: var(--step-2); }
+  .metrics { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: auto; padding-top: var(--s1); }
+  .metrics div { display: grid; gap: 2px; }
+  .metrics dd { margin: 0; font-family: var(--font-mono); font-size: 1.5rem; color: var(--starlight); }
+  .metrics dt { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-mute); max-width: 18ch; }
+</style>

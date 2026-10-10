@@ -1,0 +1,28 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Prose from '../../layouts/Prose.astro';
+import { getWriting, readingTime, fmtDate } from '../../lib/content';
+import { t } from '../../i18n/ui';
+
+export async function getStaticPaths() {
+  const posts = await getWriting();
+  return posts.map((p, i) => ({ params: { slug: p.id }, props: { post: p, prev: posts[i + 1], next: posts[i - 1] } }));
+}
+const { post, prev, next } = Astro.props;
+const { Content } = await render(post);
+---
+<Base title={post.data.title} description={post.data.description} type="article">
+  <Prose
+    kicker={`${fmtDate(post.data.date)} · ${readingTime(post.body)} ${t('post.minutes')}`}
+    title={post.data.title}
+    lede={post.data.description}
+    tags={post.data.tags}
+    sample={post.data.sample}
+    back={{ href: '/writing/', label: t('post.back') }}
+    prev={prev && { href: `/writing/${prev.id}/`, label: prev.data.title }}
+    next={next && { href: `/writing/${next.id}/`, label: next.data.title }}
+  >
+    <Content />
+  </Prose>
+</Base>

@@ -1,0 +1,41 @@
+---
+/** Types out a rotating line of mathematics, letter by letter. */
+const lines = [
+  'P(A | B) = P(B | A) · P(A) / P(B)',
+  'e^{iπ} + 1 = 0',
+  'φ = (1 + √5) / 2',
+  'f(x) = e^{−x²/2} / √(2π)',
+  'Fₙ = Fₙ₋₁ + Fₙ₋₂',
+  'V − E + F = 2',
+  '∇ · E = ρ / ε₀',
+];
+---
+<p class="eq kicker" aria-label={lines[0]} data-lines={JSON.stringify(lines)}><span class="eq__text">{lines[0]}</span><span class="eq__caret" aria-hidden="true"></span></p>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.eq').forEach((el) => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const lines: string[] = JSON.parse(el.dataset.lines!);
+    const out = el.querySelector('.eq__text')!;
+    let i = 0;
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    (async () => {
+      await sleep(3200);
+      for (;;) {
+        const cur = [...lines[i]];
+        for (let k = cur.length; k >= 0; k--) { out.textContent = cur.slice(0, k).join(''); await sleep(22); }
+        i = (i + 1) % lines.length;
+        const next = [...lines[i]];
+        el.setAttribute('aria-label', lines[i]);
+        for (let k = 0; k <= next.length; k++) { out.textContent = next.slice(0, k).join(''); await sleep(55 + Math.random() * 40); }
+        await sleep(3400);
+      }
+    })();
+  });
+</script>
+
+<style>
+  .eq { color: var(--lavender); font-size: 0.95rem; min-height: 1.6em; letter-spacing: 0.02em; }
+  .eq__caret { display: inline-block; width: 0.55em; height: 1.05em; vertical-align: -0.15em; margin-left: 2px; background: var(--starlight); animation: blink 1.05s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+</style>

@@ -1,0 +1,75 @@
+---
+/** HTML résumé. "Save as PDF" uses the browser's print dialog (print CSS below). Phone number intentionally omitted. */
+import Base from '../layouts/Base.astro';
+import { SITE } from '../config/site';
+import { getWork, fmtMonth } from '../lib/content';
+const work = await getWork();
+---
+<Base title="Résumé" description={`Résumé of ${SITE.name}.`}>
+  <article class="cv">
+    <header class="cv__head">
+      <div>
+        <h1>{SITE.name}</h1>
+        <p class="kicker">Machine Learning Engineer · Web Developer · {SITE.location}</p>
+      </div>
+      <button type="button" class="btn-ghost no-print" onclick="window.print()">Save as PDF ↓</button>
+    </header>
+    <p class="cv__links mono">
+      <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+      {SITE.links.filter((l) => !['mail', 'rss'].includes(l.icon)).map((l) => <a href={l.href}>{l.href.replace(/^https?:\/\/(www\.)?/, '')}</a>)}
+    </p>
+    <p class="cv__about">I enjoy translating business problems into data-driven software solutions using math &lt;3</p>
+
+    <h2>Experience</h2>
+    {work.map((w) => (
+      <section class="cv__job">
+        <div class="cv__row"><h3>{w.data.role} · {w.data.org}</h3><span class="kicker">{fmtMonth(w.data.start)} – {w.data.end ? fmtMonth(w.data.end) : 'now'}</span></div>
+        <p>{w.data.summary}</p>
+      </section>
+    ))}
+
+    <h2>Education</h2>
+    <div class="cv__row"><h3>BSc Applied Mathematics · Amirkabir University of Technology</h3><span class="kicker">2012 – 2017</span></div>
+    <p>Theory of Computation (20/20), Algorithm Design (19.4), PDEs (18.7), Numerical Linear Algebra (18.5), Statistics & Probability (18.4), Graph Theory (17.5).</p>
+
+    <h2>Tools</h2>
+    <dl class="cv__tools">
+      <dt>Languages</dt><dd>Python, Rust, TypeScript</dd>
+      <dt>ML / data</dt><dd>PyTorch, transformers, scikit-learn, Keras, fastai, LangChain, OpenAI Agents, Ray, MLflow, DVC, ONNX, spaCy, Polars, pandas, Modin, SciPy</dd>
+      <dt>Visualization</dt><dd>Plotly, D3.js, Superset, Streamlit, Folium, Lightweight Charts</dd>
+      <dt>Web</dt><dd>FastAPI, Django, DRF, Jinja, React, Next.js, HTML/CSS</dd>
+      <dt>Infra</dt><dd>Docker, Kubernetes, Kubeflow, Helm, Seldon, Prefect, Celery, RabbitMQ, nginx, GitHub Actions, ELK, Linux</dd>
+      <dt>Databases</dt><dd>PostgreSQL, MongoDB, Elasticsearch, Redis, Hive, Oracle, Cassandra, InfluxDB, Neo4j, FAISS, Qdrant, ChromaDB</dd>
+      <dt>Scraping</dt><dd>BeautifulSoup, Selenium, Scrapy</dd>
+    </dl>
+
+    <h2>Certificates</h2>
+    <p>MLOps Specialization, Deep Learning Specialization and Generative AI Software Development (DeepLearning.AI) · Machine Learning (Stanford) · IBM Data Science · Google Advanced Data Analytics · Applied Data Science I & II with honors (WorldQuant University) · Automate the Boring Stuff with Python · MCTS.</p>
+
+    <h2>Translation</h2>
+    <p>Persian translation of <em>Mindfulness for Teens with ADHD</em>, requested by Dr. Mandegar Nikoo.</p>
+  </article>
+</Base>
+
+<style>
+  .cv { max-width: 860px; margin: var(--s4) auto 0; padding: var(--s4) var(--s3); border-radius: var(--radius); background: var(--glass-strong); backdrop-filter: blur(16px); box-shadow: inset 0 0 0 1px var(--line); display: grid; gap: var(--s1); }
+  .cv__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--s2); }
+  .cv h1 { font-size: var(--step-3); }
+  .cv h2 { font-size: var(--step-1); margin-top: var(--s3); color: var(--starlight); font-style: italic; }
+  .cv h3 { font-size: 1.05rem; font-family: var(--font-body); font-weight: 600; }
+  .cv__row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; align-items: baseline; }
+  .cv__links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; }
+  .cv__about { font-style: italic; color: var(--ink-soft); }
+  .cv__job { display: grid; gap: 4px; margin-top: var(--s1); }
+  .cv__job p, .cv p { color: var(--ink-soft); font-size: 0.98rem; }
+  .cv__tools { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: 0.95rem; }
+  .cv__tools dt { font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-mute); padding-top: 2px; }
+  .cv__tools dd { margin: 0; color: var(--ink-soft); }
+  @media print {
+    :global(.sky), :global(.floaters), :global(.nav), :global(.shore), :global(.hire-dialog), .no-print { display: none !important; }
+    :global(body), :global(html) { background: #fff !important; color: #111 !important; }
+    .cv { box-shadow: none; background: #fff; backdrop-filter: none; margin: 0; padding: 0; max-width: none; }
+    .cv * { color: #111 !important; }
+    .cv a { text-decoration: none; }
+  }
+</style>

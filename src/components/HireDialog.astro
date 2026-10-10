@@ -1,0 +1,81 @@
+---
+import { SITE } from '../config/site';
+import { t } from '../i18n/ui';
+const mailto = `mailto:${SITE.email}?subject=${encodeURIComponent(SITE.hire.emailSubject)}`;
+const linkedin = SITE.links.find((l) => l.icon === 'linkedin');
+---
+<dialog id="hire-dialog" class="hire-dialog" aria-labelledby="hire-title">
+  <div class="hire-dialog__card">
+    <button type="button" class="hire-dialog__close" data-hire-close aria-label={t('hire.close')}>×</button>
+    <p class="kicker"><b>●</b> {SITE.hire.availability}</p>
+    <h2 id="hire-title">{SITE.hire.headline}</h2>
+    <p class="hire-dialog__blurb">{SITE.hire.blurb}</p>
+    <ul class="chips" role="list">
+      {SITE.hire.offers.map((o) => <li class="chip">{o}</li>)}
+    </ul>
+    <div class="hire-dialog__actions">
+      <a class="btn-ghost btn-solid" href={mailto}>{t('hire.email')} <span class="arr">→</span></a>
+      <button type="button" class="btn-ghost" data-copy={SITE.email}><span>{t('hire.copy')}</span></button>
+      {linkedin && <a class="btn-ghost" href={linkedin.href} rel="me noopener" target="_blank">LinkedIn ↗</a>}
+      <a class="btn-ghost" href="/resume/">{t('hire.resume')}</a>
+    </div>
+    <p class="mono muted hire-dialog__mail">{SITE.email}</p>
+  </div>
+</dialog>
+
+<script>
+  import { t } from '../i18n/ui';
+  const dlg = document.getElementById('hire-dialog') as HTMLDialogElement;
+  let opener: HTMLElement | null = null;
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const open = target.closest<HTMLElement>('[data-hire-open]');
+    if (open) { opener = open; dlg.showModal(); return; }
+    if (target.closest('[data-hire-close]') || target === dlg) dlg.close();
+    const copy = target.closest<HTMLButtonElement>('[data-copy]');
+    if (copy) {
+      navigator.clipboard?.writeText(copy.dataset.copy!).then(() => {
+        const span = copy.querySelector('span')!;
+        span.textContent = t('hire.copied');
+        setTimeout(() => (span.textContent = t('hire.copy')), 1800);
+      });
+    }
+  });
+  dlg.addEventListener('close', () => opener?.focus());
+</script>
+
+<style is:global>
+  @layer components {
+    .hire-dialog {
+      padding: 0; border: 0; background: transparent; color: var(--ink);
+      width: min(100% - 24px, 620px); max-height: calc(100dvh - 24px);
+      opacity: 0; transform: translateY(24px) scale(0.96);
+      transition: opacity 360ms var(--ease-out), transform 520ms var(--ease-spring), overlay 360ms allow-discrete, display 360ms allow-discrete;
+    }
+    .hire-dialog[open] { opacity: 1; transform: none; }
+    @starting-style { .hire-dialog[open] { opacity: 0; transform: translateY(24px) scale(0.96); } }
+    .hire-dialog::backdrop { background: rgb(6 7 18 / 0.0); backdrop-filter: blur(0px); transition: all 360ms allow-discrete; }
+    .hire-dialog[open]::backdrop { background: rgb(6 7 18 / 0.66); backdrop-filter: blur(6px); }
+    @starting-style { .hire-dialog[open]::backdrop { background: rgb(6 7 18 / 0); backdrop-filter: blur(0); } }
+    .hire-dialog__card {
+      position: relative; display: grid; gap: var(--s2);
+      padding: var(--s4) var(--s3) var(--s3);
+      border-radius: var(--radius);
+      background: radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--violet) 30%, transparent), transparent 60%), var(--glass-strong);
+      box-shadow: inset 0 0 0 1px var(--line-strong), 0 40px 120px -20px rgb(0 0 0 / 0.8);
+      -webkit-mask: radial-gradient(circle at 100% 0, transparent 30px, #000 30.6px);
+              mask: radial-gradient(circle at 100% 0, transparent 30px, #000 30.6px);
+    }
+    .hire-dialog h2 { font-size: var(--step-3); }
+    .hire-dialog__blurb { color: var(--ink-soft); }
+    .hire-dialog__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .btn-solid { background: var(--starlight); color: var(--night-0); border-color: transparent; }
+    .btn-solid:hover { background: var(--pearl); color: var(--night-0); }
+    .hire-dialog__close {
+      position: absolute; top: 34px; right: 22px; width: 44px; height: 44px; border-radius: 50%;
+      border: 1px solid var(--line-strong); background: transparent; font-size: 1.5rem; line-height: 1; color: var(--ink);
+    }
+    .hire-dialog__close:hover { background: var(--lavender); color: var(--night-0); }
+    .hire-dialog__mail { font-size: 0.85rem; }
+  }
+</style>

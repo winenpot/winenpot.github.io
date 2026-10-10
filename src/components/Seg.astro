@@ -1,0 +1,21 @@
+---
+/** LCD seven-segment number. <Seg value={6} pad={2} label="years" /> */
+interface Props { value: number | string; pad?: number; label?: string; class?: string }
+const { value, pad = 2, label, class: cls } = Astro.props;
+const text = String(value).padStart(pad, '0');
+---
+<span class:list={['seg', cls]} data-seg={text} data-label={label} role="img" aria-label={`${text} ${label ?? ''}`}>{text}</span>
+
+<script>
+  import { upgradeSegments } from '../scripts/seg';
+  upgradeSegments();
+</script>
+
+<style is:global>
+  @layer components {
+    .seg { display: inline-flex; gap: 0.12em; color: var(--starlight); height: 1em; line-height: 1; vertical-align: -0.1em; }
+    .seg-digit { height: 1em; width: auto; overflow: visible; }
+    .seg-digit polygon { fill: currentColor; opacity: 0.08; transition: opacity 120ms; }
+    .seg-digit polygon.on { opacity: 1; filter: drop-shadow(0 0 0.06em currentColor); }
+  }
+</style>

@@ -1,0 +1,24 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Prose from '../../layouts/Prose.astro';
+import { getJournal, fmtDate } from '../../lib/content';
+import { t } from '../../i18n/ui';
+export async function getStaticPaths() {
+  const all = await getJournal();
+  return all.map((e, i) => ({ params: { slug: e.id }, props: { entry: e, prev: all[i + 1], next: all[i - 1] } }));
+}
+const { entry, prev, next } = Astro.props;
+const { Content } = await render(entry);
+---
+<Base title={entry.data.title} type="article">
+  <Prose
+    kicker={`${fmtDate(entry.data.date)}${entry.data.mood ? ` · feeling ${entry.data.mood}` : ''}`}
+    title={entry.data.title}
+    tags={entry.data.tags}
+    sample={entry.data.sample}
+    back={{ href: '/journal/', label: t('journal.back') }}
+    prev={prev && { href: `/journal/${prev.id}/`, label: prev.data.title }}
+    next={next && { href: `/journal/${next.id}/`, label: next.data.title }}
+  ><Content /></Prose>
+</Base>

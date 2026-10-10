@@ -1,0 +1,74 @@
+---
+/**
+ * Your portrait in a pointed (Persian) arch. With a photo: greyscale,
+ * revealed in color inside a soft circle that follows the cursor.
+ * Without one: a drawn placeholder bust under stars, with a hint.
+ * Set the photo in src/config/site.ts → SITE.photo / SITE.aboutPhoto.
+ */
+import { t } from '../i18n/ui';
+interface Props { photo: { src: string; alt: string }; class?: string }
+const { photo, class: cls } = Astro.props;
+const has = Boolean(photo.src);
+---
+<figure class:list={['arch', cls, { 'arch--empty': !has }]} data-arch>
+  {has ? (
+    <>
+      <img src={photo.src} alt={photo.alt} class="arch__bw" loading="lazy" decoding="async" />
+      <img src={photo.src} alt="" aria-hidden="true" class="arch__color" loading="lazy" decoding="async" />
+    </>
+  ) : (
+    <div class="arch__placeholder" role="img" aria-label={t('photo.placeholder')}>
+      <svg viewBox="0 0 200 260" aria-hidden="true">
+        <g class="arch__stars">
+          <circle cx="40" cy="60" r="1.4" /><circle cx="150" cy="44" r="1.8" /><circle cx="120" cy="80" r="1" />
+          <circle cx="70" cy="34" r="1" /><circle cx="168" cy="100" r="1.2" /><circle cx="30" cy="110" r="1" />
+          <path d="M150 44 L120 80 L168 100" />
+        </g>
+        <g class="arch__bust">
+          <circle cx="100" cy="128" r="30" />
+          <path d="M40 260 C44 205 70 182 100 182 C130 182 156 205 160 260" />
+        </g>
+      </svg>
+      <figcaption>
+        <span>{t('photo.placeholder')}</span>
+        <code>{t('photo.hint')}</code>
+      </figcaption>
+    </div>
+  )}
+</figure>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-arch]').forEach((el) => {
+    el.addEventListener('pointermove', (e) => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      el.style.setProperty('--my', `${e.clientY - r.top}px`);
+    });
+    el.addEventListener('pointerenter', () => el.classList.add('is-on'));
+    el.addEventListener('pointerleave', () => el.classList.remove('is-on'));
+  });
+</script>
+
+<style is:global>
+  @layer components {
+    .arch {
+      position: relative; width: 100%; height: 100%; min-height: 340px;
+      --arch: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 130' preserveAspectRatio='none'%3E%3Cpath d='M0 130 V48 C0 26 30 12 50 0 C70 12 100 26 100 48 V130 Z'/%3E%3C/svg%3E");
+      -webkit-mask: var(--arch) center / 100% 100% no-repeat; mask: var(--arch) center / 100% 100% no-repeat;
+      background: linear-gradient(180deg, var(--night-3), var(--night-1));
+      overflow: hidden;
+    }
+    .arch img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .arch__bw { filter: grayscale(1) contrast(1.05) brightness(0.9); }
+    .arch__color { clip-path: circle(var(--reveal) at var(--mx, 50%) var(--my, 40%)); transition: --reveal 520ms var(--ease-out); }
+    .arch.is-on .arch__color { --reveal: 120px; }
+    .arch__placeholder { position: absolute; inset: 0; display: grid; place-items: end center; }
+    .arch__placeholder svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .arch__stars circle { fill: var(--starlight); }
+    .arch__stars path { fill: none; stroke: var(--lavender); stroke-width: 0.6; opacity: 0.5; stroke-dasharray: 2 3; }
+    .arch__bust { fill: none; stroke: var(--lavender); stroke-width: 1.2; stroke-dasharray: 4 4; opacity: 0.8; animation: march 12s linear infinite; }
+    @keyframes march { to { stroke-dashoffset: -80; } }
+    .arch__placeholder figcaption { position: relative; display: grid; gap: 4px; text-align: center; padding: 0 12px 20px; font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-soft); }
+    .arch__placeholder code { color: var(--ink-mute); font-size: 0.72rem; }
+  }
+</style>

@@ -1,0 +1,85 @@
+/* ───────────────────────────────────────────────────────────────────
+   DESIGN TOKENS — the palette, type, spacing and motion knobs.
+   Every component reads these; do not hard-code colors elsewhere.
+   Palette: a dim Ciurlionis night — slate blue, indigo, dusty violet,
+   lavender, periwinkle, with pearl/starlight accents.
+   ─────────────────────────────────────────────────────────────────── */
+
+@property --notch { syntax: '<length>'; inherits: true; initial-value: 22px; }
+@property --spin  { syntax: '<angle>';  inherits: false; initial-value: 0deg; }
+@property --reveal { syntax: '<length>'; inherits: false; initial-value: 0px; }
+
+:root {
+  color-scheme: dark;
+
+  /* night ramp (backgrounds) */
+  --night-0: #0a0b1c;
+  --night-1: #10132b;
+  --night-2: #181c3d;
+  --night-3: #232854;
+
+  /* hues */
+  --slate: #4a5590;
+  --cobalt: #5566b8;
+  --periwinkle: #9aa6ec;
+  --lavender: #bfb0ea;
+  --violet: #8c6fd1;
+  --mauve: #c79ad8;
+  --pearl: #efeaf7;
+  --starlight: #f4e9c8;   /* the only warm note — stars, LCD digits, sparks */
+
+  /* text */
+  --ink: #ecebf8;
+  --ink-soft: #b9bbdf;
+  --ink-mute: #8d90bd;
+
+  /* surfaces */
+  --glass: color-mix(in oklab, var(--night-2) 72%, transparent);
+  --glass-strong: color-mix(in oklab, var(--night-2) 90%, transparent);
+  --line: color-mix(in oklab, var(--lavender) 22%, transparent);
+  --line-strong: color-mix(in oklab, var(--lavender) 45%, transparent);
+
+  /* card tones (set --tone on a card) */
+  --tone-lavender: var(--lavender);
+  --tone-periwinkle: var(--periwinkle);
+  --tone-violet: var(--violet);
+  --tone-mauve: var(--mauve);
+  --tone-starlight: var(--starlight);
+  --tone-cobalt: var(--cobalt);
+
+  /* type */
+  --font-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+  --step--1: clamp(0.83rem, 0.8rem + 0.15vw, 0.9rem);
+  --step-0: clamp(1.0625rem, 1rem + 0.25vw, 1.15rem);
+  --step-1: clamp(1.3rem, 1.15rem + 0.6vw, 1.6rem);
+  --step-2: clamp(1.6rem, 1.3rem + 1.2vw, 2.25rem);
+  --step-3: clamp(2.1rem, 1.5rem + 2.4vw, 3.4rem);
+  --step-4: clamp(2.8rem, 1.6rem + 5vw, 6rem);
+
+  /* space (8px grid) */
+  --s-1: 4px; --s0: 8px; --s1: 16px; --s2: 24px; --s3: 32px; --s4: 48px; --s5: 64px; --s6: 96px;
+  --gap: 14px;
+  --page-max: 1240px;
+  --prose-max: 68ch;
+
+  /* shape */
+  --radius: 26px;
+  --radius-sm: 14px;
+  --notch-rest: 22px;
+  --notch-hover: 54px;
+  --frame-inset: 9px;
+
+  /* motion */
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --dur: 380ms;
+
+  /* layers */
+  --z-sky: 0; --z-floaters: 1; --z-content: 2; --z-nav: 20; --z-dialog: 50;
+}
+
+@media (min-width: 1024px) {
+  :root { --gap: 18px; }
+}

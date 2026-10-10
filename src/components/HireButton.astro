@@ -1,0 +1,110 @@
+---
+/**
+ * The "Hire me" button: a rotating conic rim, a wave of starlight that
+ * rises inside on hover, an orbiting spark and a gentle magnetic pull
+ * toward the cursor. Opens the <HireDialog> (one per page, in Base layout).
+ * size: 'lg' (hero) | 'sm' (nav)
+ */
+import { t } from '../i18n/ui';
+interface Props { size?: 'lg' | 'sm'; class?: string }
+const { size = 'lg', class: cls } = Astro.props;
+---
+<button type="button" class:list={['hire', `hire--${size}`, cls]} data-hire-open aria-haspopup="dialog">
+  <span class="hire__rim" aria-hidden="true"></span>
+  <span class="hire__body" aria-hidden="true">
+    <svg class="hire__wave" viewBox="0 0 240 40" preserveAspectRatio="none">
+      <path d="M0 20 Q15 8 30 20 T60 20 T90 20 T120 20 T150 20 T180 20 T210 20 T240 20 V40 H0Z" />
+      <path d="M0 22 Q15 32 30 22 T60 22 T90 22 T120 22 T150 22 T180 22 T210 22 T240 22 V40 H0Z" />
+    </svg>
+  </span>
+  <span class="hire__orbit" aria-hidden="true"><i></i></span>
+  <span class="hire__label">
+    <svg class="hire__star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l2.2 7.3 7.3 2.2-7.3 2.2L12 20.5l-2.2-7.3L2.5 11l7.3-2.2z"/></svg>
+    {t('hire.cta')}
+  </span>
+</button>
+
+<script>
+  // magnetic pull (pointer-fine devices only)
+  if (matchMedia('(pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll<HTMLElement>('.hire').forEach((b) => {
+      b.addEventListener('pointermove', (e) => {
+        const r = b.getBoundingClientRect();
+        const x = (e.clientX - r.left - r.width / 2) / r.width;
+        const y = (e.clientY - r.top - r.height / 2) / r.height;
+        b.style.setProperty('--mx', `${x * 10}px`);
+        b.style.setProperty('--my', `${y * 8}px`);
+      });
+      b.addEventListener('pointerleave', () => { b.style.setProperty('--mx', '0px'); b.style.setProperty('--my', '0px'); });
+    });
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .hire {
+      --h: 60px;
+      --mx: 0px; --my: 0px;
+      position: relative;
+      isolation: isolate;
+      display: inline-grid;
+      place-items: center;
+      height: var(--h);
+      padding: 0 34px;
+      border: 0;
+      border-radius: 999px;
+      background: none;
+      color: var(--pearl);
+      font-family: var(--font-mono);
+      font-weight: 500;
+      font-size: 1.02rem;
+      letter-spacing: 0.04em;
+      transform: translate(var(--mx), var(--my));
+      transition: transform 400ms var(--ease-spring), color 300ms;
+    }
+    .hire--sm { --h: 44px; padding: 0 20px; font-size: 0.86rem; }
+    /* rotating conic rim */
+    .hire__rim {
+      position: absolute; inset: 0; border-radius: inherit; z-index: -2;
+      background: conic-gradient(from var(--spin), var(--violet), var(--periwinkle), var(--starlight), var(--mauve), var(--violet));
+      animation: hire-spin 4.5s linear infinite;
+      filter: saturate(1.1);
+    }
+    .hire__rim::after {
+      content: ''; position: absolute; inset: -6px; border-radius: inherit; z-index: -1;
+      background: inherit; filter: blur(14px); opacity: 0.45; transition: opacity 400ms;
+    }
+    @keyframes hire-spin { to { --spin: 360deg; } }
+    /* inner body + rising wave */
+    .hire__body {
+      position: absolute; inset: 2px; border-radius: inherit; z-index: -1; overflow: hidden;
+      background: radial-gradient(120% 140% at 30% 0%, var(--night-3), var(--night-1));
+    }
+    .hire__wave {
+      position: absolute; left: 0; bottom: 0; width: 200%; height: 100%;
+      transform: translate(0, 62%);
+      transition: transform 700ms var(--ease-out);
+      animation: hire-wave 3.2s linear infinite;
+    }
+    .hire__wave path:first-child { fill: color-mix(in oklab, var(--periwinkle) 55%, transparent); }
+    .hire__wave path:last-child { fill: color-mix(in oklab, var(--starlight) 70%, var(--lavender)); }
+    @keyframes hire-wave { to { left: -100%; } }
+    .hire:hover .hire__wave, .hire:focus-visible .hire__wave { transform: translate(0, 4%); }
+    .hire:hover, .hire:focus-visible { color: var(--night-0); }
+    .hire:hover .hire__rim::after { opacity: 0.85; }
+    .hire:active { transform: translate(var(--mx), var(--my)) scale(0.96); }
+    .hire__label { position: relative; display: inline-flex; align-items: center; gap: 10px; transition: color 300ms; }
+    .hire__star { width: 15px; height: 15px; fill: currentColor; transition: transform 700ms var(--ease-spring); }
+    .hire:hover .hire__star { transform: rotate(180deg) scale(1.25); }
+    /* orbiting spark */
+    .hire__orbit { position: absolute; inset: -7px; border-radius: inherit; pointer-events: none; }
+    .hire__orbit i {
+      position: absolute; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--starlight); box-shadow: 0 0 10px 2px var(--starlight);
+      offset-path: inset(0 round 999px);
+      offset-rotate: 0deg;
+      animation: hire-orbit 6s linear infinite;
+    }
+    @keyframes hire-orbit { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+  }
+</style>

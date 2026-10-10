@@ -1,0 +1,15 @@
+>>> khayyam-down
+FAILED khayyam-down
+Error: job d596ea1f-15b0-4ead-a3cb-392731601653 ended with status "failed"
+>>> khayyam-up
+FAILED khayyam-up
+Error: job f6f00827-6ba0-4278-ab40-f6a5f2666b2f ended with status "failed"
+DONE
+cp: cannot stat 'khayyam-down.png': No such file or directory
+Traceback (most recent call last):
+  File "<string>", line 4, in <module>
+    ims=[Image.open(n+'.png').convert('RGB') for n in names]
+         ~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\crusa\AppData\Local\uv\cache\archive-v0\TEKq4R10gZHz3FVm\Lib\site-packages\PIL\Image.py", line 3639, in open
+    fp = builtins.open(filename, "rb")
+FileNotFoundError: [Errno 2] No such file or directory: 'kd1.png'

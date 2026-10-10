@@ -1,0 +1,97 @@
+---
+/**
+ * One live demo from the `lab` collection. Nothing loads until the visitor
+ * presses "Wake it up" (free hosts sleep; an LCD stopwatch counts the
+ * cold start). Kinds: huggingface | gradio | streamlit | iframe | api.
+ */
+import type { CollectionEntry } from 'astro:content';
+import { hfSpaceUrl } from '../lib/content';
+import { t } from '../i18n/ui';
+import Card from './Card.astro';
+interface Props { demo: CollectionEntry<'lab'> }
+const { demo } = Astro.props;
+const d = demo.data;
+const src =
+  d.kind === 'huggingface' && d.space ? hfSpaceUrl(d.space)
+  : d.kind === 'streamlit' && d.url ? `${d.url}${d.url.includes('?') ? '&' : '?'}embed=true`
+  : d.url ?? '';
+const page = d.kind === 'huggingface' && d.space ? `https://huggingface.co/spaces/${d.space}` : d.url;
+---
+<Card tone="violet" span="m6 l12" label={d.kind} class="demo">
+  <div class="demo__head">
+    <div>
+      <h2>{d.title}</h2>
+      <p class="muted">{d.description}</p>
+      <ul class="chips" role="list">{d.tags.map((x) => <li class="chip">{x}</li>)}</ul>
+    </div>
+    <div class="demo__actions">
+      <span class="demo__clock" aria-live="polite"><span data-seg="00">00</span><small class="kicker">s</small></span>
+      <button type="button" class="btn-ghost btn-solid" data-wake>{t('lab.wake')}</button>
+      {page && <a class="btn-ghost" href={page} target="_blank" rel="noopener">{t('lab.open')} ↗</a>}
+      {d.repo && <a class="btn-ghost" href={d.repo} target="_blank" rel="noopener">Code ↗</a>}
+    </div>
+  </div>
+  <div class="demo__stage" data-kind={d.kind} data-src={src} data-method={d.method} data-height={d.height}>
+    {d.kind === 'api' && (
+      <form class="demo__api" hidden>
+        <label class="kicker" for={`in-${demo.id}`}>request body (JSON)</label>
+        <textarea id={`in-${demo.id}`} rows="6" spellcheck="false">{d.sample ?? '{}'}</textarea>
+        <button class="btn-ghost" type="submit">{t('lab.send')} →</button>
+        <pre class="demo__out" aria-live="polite"></pre>
+      </form>
+    )}
+  </div>
+</Card>
+
+<script>
+  import { segment } from '../scripts/seg';
+  import { t } from '../i18n/ui';
+  document.querySelectorAll<HTMLElement>('.demo').forEach((card) => {
+    const btn = card.querySelector<HTMLButtonElement>('[data-wake]')!;
+    const stage = card.querySelector<HTMLElement>('.demo__stage')!;
+    const clock = card.querySelector<HTMLElement>('[data-seg]')!;
+    segment(clock, '00');
+    btn.addEventListener('click', () => {
+      btn.disabled = true; btn.textContent = t('lab.waking');
+      const t0 = performance.now();
+      const timer = setInterval(() => segment(clock, String(Math.min(99, Math.floor((performance.now() - t0) / 1000))).padStart(2, '0')), 250);
+      const done = () => { clearInterval(timer); btn.textContent = '● live'; };
+      const { kind, src, method, height } = stage.dataset;
+      if (kind === 'api') {
+        const form = stage.querySelector('form')!; form.hidden = false;
+        const out = form.querySelector('pre')!;
+        const ta = form.querySelector('textarea')!;
+        // ping the root so Render-style free servers start waking up
+        fetch(src!, { method: 'GET', mode: 'no-cors' }).finally(done);
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault(); out.textContent = '…';
+          try {
+            const res = await fetch(src!, { method, headers: { 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : ta.value });
+            const text = await res.text();
+            try { out.textContent = JSON.stringify(JSON.parse(text), null, 2); } catch { out.textContent = text; }
+          } catch (err) { out.textContent = String(err) + '\n(Is CORS enabled for this site on the API?)'; }
+        });
+        return;
+      }
+      const f = document.createElement('iframe');
+      f.src = src!; f.loading = 'lazy'; f.title = card.querySelector('h2')!.textContent!;
+      f.allow = 'clipboard-write; microphone; camera';
+      f.style.height = `${height}px`;
+      f.addEventListener('load', done);
+      stage.replaceChildren(f);
+    });
+  });
+</script>
+
+<style>
+  .demo__head { display: grid; gap: var(--s2); }
+  @media (min-width: 900px) { .demo__head { grid-template-columns: 1fr auto; align-items: start; } }
+  .demo__head h2 { font-size: var(--step-2); }
+  .demo__head .chips { margin-top: var(--s1); }
+  .demo__actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .demo__clock { display: inline-flex; align-items: baseline; gap: 4px; font-size: 1.6rem; }
+  .demo__stage :global(iframe) { width: 100%; border: 0; border-radius: var(--radius-sm); background: var(--night-1); margin-top: var(--s2); }
+  .demo__api { display: grid; gap: 10px; margin-top: var(--s2); }
+  .demo__api textarea, .demo__out { width: 100%; background: var(--night-1); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink); }
+  .demo__out { min-height: 3em; white-space: pre-wrap; margin: 0; }
+</style>

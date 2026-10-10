@@ -1,0 +1,70 @@
+---
+import Base from '../layouts/Base.astro';
+import Card from '../components/Card.astro';
+import PhotoFrame from '../components/PhotoFrame.astro';
+import HireButton from '../components/HireButton.astro';
+import { SITE } from '../config/site';
+const courses = [
+  ['Theory of Computation', '20/20'], ['Algorithm Design', '19.4/20'], ['Partial Differential Equations', '18.7/20'],
+  ['Numerical Linear Algebra', '18.5/20'], ['Statistics & Probability', '18.4/20'], ['Graph Theory', '17.5/20'],
+];
+const certs = [
+  'Machine Learning Engineering in Production (MLOps) — DeepLearning.AI',
+  'Deep Learning Specialization — DeepLearning.AI',
+  'Generative AI Software Development — DeepLearning.AI',
+  'Machine Learning — Stanford University',
+  'IBM Data Science Professional Certificate',
+  'Google Advanced Data Analytics',
+  'Applied Data Science I & II (with honors) — WorldQuant University',
+  'Automate the Boring Stuff with Python — Udemy',
+  'MCTS — Mojtama Fani-e-Tehran',
+];
+---
+<Base title="About" description={`About ${SITE.name} — applied mathematician, ML engineer, lover of geometry and philosophy.`}>
+  <header class="page-head">
+    <p class="kicker">{SITE.location}</p>
+    <h1><span class="wave-underline">About</span></h1>
+    <p>Applied mathematician by training, engineer by habit, philosopher after midnight.</p>
+  </header>
+  <div class="bento">
+    <Card tone="periwinkle" span="m3 l4" rows={2} class="about-photo"><PhotoFrame photo={SITE.aboutPhoto} /></Card>
+    <Card tone="lavender" span="m3 l8" label="the short version" class="story">
+      <div class="prose">
+        <p>I studied <strong>Applied Mathematics at Amirkabir University of Technology</strong> (2012–2017), where the courses that stuck were the ones about structure: theory of computation, algorithms, graphs, linear algebra, probability.</p>
+        <p>Since 2020 I've worked as a data scientist, ML engineer, technical lead and co-founder — classifying images for a marketplace, forecasting a mall's electricity, making a bank's ML services ship ten times faster, leading a team that built a RAG assistant for aircraft maintenance, and teaching social agents to call a language model only when they truly need one.</p>
+        <p>What ties it together is a belief that <em>most problems get simpler when you find the right mathematical object to hold them</em> — a distribution, a graph, a network of beliefs.</p>
+        <p>Away from work I read philosophy and cognitive science, sketch geometry, learn Rust, and I translated <em>Mindfulness for Teens with ADHD</em> into Persian at the request of Dr. Mandegar Nikoo.</p>
+      </div>
+    </Card>
+    <Card tone="starlight" span="m3 l4" label="favourite courses, by grade" class="courses">
+      <ul class="grades" role="list">
+        {courses.map(([c, g]) => <li><span>{c}</span><b>{g}</b></li>)}
+      </ul>
+    </Card>
+    <Card tone="mauve" span="m3 l4" label="loves" class="loves">
+      <ul class="chips" role="list">
+        {['geometry', 'probability', 'graph theory', 'philosophy of mind', 'cognitive science', 'Rust', 'Persian poetry', 'clean systems'].map((x) => <li class="chip">{x}</li>)}
+      </ul>
+      <p class="muted">Values: a calm, sustainable pace. Understanding systems, not just using them.</p>
+    </Card>
+    <Card tone="cobalt" span="m6 l8" label="certificates" class="certs">
+      <ul class="certs__list">{certs.map((c) => <li>{c}</li>)}</ul>
+    </Card>
+    <Card tone="violet" span="m6 l4" class="about-hire">
+      <h2>Let's build something careful.</h2>
+      <HireButton />
+      <a class="btn-ghost" href="/resume/">Read the résumé <span class="arr">→</span></a>
+    </Card>
+  </div>
+</Base>
+
+<style>
+  .about-photo { padding: var(--s1); min-height: 460px; }
+  .grades { list-style: none; padding: 0; display: grid; gap: 8px; }
+  .grades li { display: flex; justify-content: space-between; gap: var(--s1); border-bottom: 1px dashed var(--line); padding-bottom: 6px; font-size: 0.95rem; }
+  .grades b { font-family: var(--font-mono); font-weight: 500; color: var(--starlight); }
+  .certs__list { columns: 2 280px; column-gap: var(--s3); padding-left: 1.1em; color: var(--ink-soft); font-size: 0.95rem; }
+  .certs__list li { margin-bottom: 6px; break-inside: avoid; }
+  .about-hire { justify-content: center; gap: var(--s2); align-items: flex-start; }
+  .about-hire h2 { font-size: var(--step-2); }
+</style>

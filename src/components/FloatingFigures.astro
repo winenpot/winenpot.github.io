@@ -1,0 +1,52 @@
+---
+import { FLOATING } from '../config/figures';
+/** The page-wide layer of drifting math figures (behind content). */
+---
+<div class="floaters" aria-hidden="true">
+  {FLOATING.map((f, i) => (
+    <div
+      class:list={['floater', { 'floater--desktop': f.mobile === false }]}
+      style={`--x:${f.x}%; --y:${f.y}%; --size:${f.size}px; --depth:${f.depth}; color:${f.tone}; --bob:${7 + (i % 4) * 1.7}s; --delay:${-i * 1.3}s;`}
+      title={f.label}
+    >
+      <canvas data-figure={f.kind} data-size={f.size}></canvas>
+    </div>
+  ))}
+</div>
+
+<script>
+  import { startFigures } from '../scripts/math-figures';
+  const run = () => startFigures();
+  // wait for Fraunces so canvas labels use it
+  document.fonts?.ready ? document.fonts.ready.then(run) : run();
+
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const root = document.documentElement;
+    let raf = 0;
+    addEventListener('scroll', () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => root.style.setProperty('--scroll', String(scrollY)));
+    }, { passive: true });
+  }
+</script>
+
+<style>
+  .floaters { position: absolute; inset: 0; z-index: var(--z-floaters); pointer-events: none; overflow: hidden; }
+  .floater {
+    position: absolute;
+    left: var(--x); top: var(--y);
+    width: var(--size); height: var(--size);
+    translate: 0 calc(var(--scroll, 0) * var(--depth) * 1px);
+    animation: bob var(--bob) ease-in-out var(--delay) infinite alternate;
+    opacity: 0.8;
+  }
+  .floater canvas { width: 100%; height: 100%; }
+  @keyframes bob {
+    from { transform: translateY(-10px) rotate(-3deg); }
+    to   { transform: translateY(12px) rotate(3deg); }
+  }
+  @media (max-width: 639px) {
+    .floater--desktop { display: none; }
+    .floater { width: calc(var(--size) * 0.6); height: calc(var(--size) * 0.6); opacity: 0.55; }
+  }
+</style>

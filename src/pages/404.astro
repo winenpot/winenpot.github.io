@@ -1,0 +1,16 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Lost among the stars">
+  <section class="lost">
+    <p class="kicker">error 404 · this page is not in the catalogue</p>
+    <h1>Lost among the stars.</h1>
+    <p>“The Moving Finger writes; and, having writ, moves on.” — this page, it seems, moved on.</p>
+    <a class="btn-ghost" href="/">Back to the sky <span class="arr">→</span></a>
+  </section>
+</Base>
+<style>
+  .lost { min-height: 50vh; display: grid; place-content: center; gap: var(--s2); text-align: center; justify-items: center; padding-top: var(--s6); }
+  .lost h1 { font-size: var(--step-4); font-style: italic; font-weight: 300; }
+  .lost p:not(.kicker) { color: var(--ink-soft); max-width: 46ch; }
+</style>

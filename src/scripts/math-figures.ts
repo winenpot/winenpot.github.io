@@ -262,10 +262,11 @@ export type FigureKind = keyof typeof FIGURES;
 /** One shared loop for every [data-figure] canvas; pauses off-screen. */
 export function startFigures() {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const frameInterval = 1000 / 30;
   const nodes = [...document.querySelectorAll<HTMLCanvasElement>('canvas[data-figure]')];
   const live = new Set<HTMLCanvasElement>();
   const items = nodes.map((c) => {
-    const dpr = Math.min(2, devicePixelRatio || 1);
+    const dpr = Math.min(1.5, devicePixelRatio || 1);
     const size = c.clientWidth || Number(c.dataset.size) || 160;
     c.width = c.height = Math.round(size * dpr);
     const ctx = c.getContext('2d')!;
@@ -273,7 +274,13 @@ export function startFigures() {
     const color = getComputedStyle(c).color;
     return { c, ctx, size, color, draw: FIGURES[c.dataset.figure!], seed: Math.random() * 100 };
   });
+  let lastFrame = 0;
   const frame = (ms: number) => {
+    if (!reduce && ms - lastFrame < frameInterval) {
+      requestAnimationFrame(frame);
+      return;
+    }
+    lastFrame = ms;
     const t = ms / 1000;
     for (const it of items) {
       if (!live.has(it.c) || !it.draw) continue;
@@ -282,7 +289,7 @@ export function startFigures() {
     }
     if (!reduce) requestAnimationFrame(frame);
   };
-  const io = new IntersectionObserver((es) => es.forEach((e) => (e.isIntersecting ? live.add(e.target as HTMLCanvasElement) : live.delete(e.target as HTMLCanvasElement))), { rootMargin: '120px' });
+  const io = new IntersectionObserver((es) => es.forEach((e) => (e.isIntersecting ? live.add(e.target as HTMLCanvasElement) : live.delete(e.target as HTMLCanvasElement))));
   nodes.forEach((n) => io.observe(n));
   if (reduce) { items.forEach((it) => live.add(it.c)); setTimeout(() => frame(12000), 50); }
   else requestAnimationFrame(frame);

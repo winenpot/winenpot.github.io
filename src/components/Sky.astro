@@ -19,12 +19,13 @@ import skyTop from '../assets/art/sky-top.png';
   const ctx = c.getContext('2d')!;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   type Star = { x: number; y: number; r: number; p: number; s: number };
+  const frameInterval = 1000 / 30;
   let W = 0, H = 0, dpr = 1, stars: Star[] = [];
   const mouse = { x: -999, y: -999 };
   const meteors: { x: number; y: number; vx: number; vy: number; life: number }[] = [];
 
   function resize() {
-    dpr = Math.min(2, devicePixelRatio || 1);
+    dpr = Math.min(1.5, devicePixelRatio || 1);
     W = innerWidth; H = innerHeight;
     c.width = W * dpr; c.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const n = Math.round((W * H) / 7000);
@@ -38,8 +39,13 @@ import skyTop from '../assets/art/sky-top.png';
     const fromLeft = Math.random() < 0.5;
     meteors.push({ x: fromLeft ? W * (0.1 + Math.random() * 0.4) : W * (0.5 + Math.random() * 0.4), y: H * (0.04 + Math.random() * 0.25), vx: (fromLeft ? 1 : -1) * (520 + Math.random() * 260), vy: 170 + Math.random() * 120, life: 1 });
   }
-  let last = 0;
+  let last = 0, lastFrame = frameInterval / 2;
   function frame(ms: number) {
+    if (!reduce && ms - lastFrame < frameInterval) {
+      requestAnimationFrame(frame);
+      return;
+    }
+    lastFrame = ms;
     const t = ms / 1000, dt = Math.min(0.05, t - last); last = t;
     ctx.clearRect(0, 0, W, H);
     for (const s of stars) {

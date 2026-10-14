@@ -18,8 +18,6 @@ export const SITE = {
   description:
     'Writing, journal, work and live experiments of Ashkan — machine learning, mathematics, philosophy and geometry.',
   location: 'Tehran, Iran',
-  /** Shown as a tiny coordinate kicker on the home hero. */
-  coords: 'N 35.70° · E 51.40°',
   email: 'ashkanmehravand@gmail.com',
   /** First year of professional ML work — drives the "years" LCD stat. */
   sinceYear: 2020,

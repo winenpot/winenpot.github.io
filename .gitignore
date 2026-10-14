@@ -6,3 +6,6 @@ dist/
 assets/gen/*.json
 assets/gen/*.err
 assets/gen/run.log
+docs/.obsidian/workspace*.json
+docs/.obsidian/cache
+assets/gen/wittgenstein/figure-*.png

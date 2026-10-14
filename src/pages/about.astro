@@ -2,7 +2,6 @@
 import Base from '../layouts/Base.astro';
 import Card from '../components/Card.astro';
 import PhotoFrame from '../components/PhotoFrame.astro';
-import HireButton from '../components/HireButton.astro';
 import { SITE } from '../config/site';
 const courses = [
   ['Theory of Computation', '20/20'], ['Algorithm Design', '19.4/20'], ['Partial Differential Equations', '18.7/20'],
@@ -50,9 +49,16 @@ const certs = [
     <Card tone="cobalt" span="m6 l8" label="certificates" class="certs">
       <ul class="certs__list">{certs.map((c) => <li>{c}</li>)}</ul>
     </Card>
+    <Card tone="cobalt" span="m6 l12" label="stack" class="stack">
+      {Object.entries(SITE.stack).map(([group, items]) => (
+        <div class="stack__group">
+          <p class="kicker">{group}</p>
+          <ul class="chips" role="list">{items.map((i) => <li class="chip">{i}</li>)}</ul>
+        </div>
+      ))}
+    </Card>
     <Card tone="violet" span="m6 l4" class="about-hire">
       <h2>Let's build something careful.</h2>
-      <HireButton />
       <a class="btn-ghost" href="/resume/">Read the résumé <span class="arr">→</span></a>
     </Card>
   </div>
@@ -65,6 +71,8 @@ const certs = [
   .grades b { font-family: var(--font-mono); font-weight: 500; color: var(--starlight); }
   .certs__list { columns: 2 280px; column-gap: var(--s3); padding-left: 1.1em; color: var(--ink-soft); font-size: 0.95rem; }
   .certs__list li { margin-bottom: 6px; break-inside: avoid; }
+  .stack { gap: var(--s2); }
+  .stack__group { display: grid; gap: 8px; }
   .about-hire { justify-content: center; gap: var(--s2); align-items: flex-start; }
   .about-hire h2 { font-size: var(--step-2); }
 </style>

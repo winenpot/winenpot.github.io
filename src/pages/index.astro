@@ -2,10 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Card from '../components/Card.astro';
 import Seg from '../components/Seg.astro';
-import HireButton from '../components/HireButton.astro';
 import PhotoFrame from '../components/PhotoFrame.astro';
-import EquationTicker from '../components/EquationTicker.astro';
-import QuoteCycler from '../components/QuoteCycler.astro';
 import Timeline from '../components/Timeline.astro';
 import { SITE } from '../config/site';
 import { t } from '../i18n/ui';
@@ -19,16 +16,14 @@ const latestJournal = journal[0];
   <section class="bento home">
     <!-- hero -->
     <Card tone="lavender" span="m6 l8" rows={2} class="hero">
-      <p class="kicker">{SITE.coords} · <b>{SITE.role}</b></p>
+      <p class="kicker">{SITE.role}</p>
       <h1 class="hero__name">
         <span class="hero__first">{SITE.firstName}</span>
         <span class="hero__last">{SITE.lastName}</span>
       </h1>
       <p class="hero__tagline">{SITE.tagline}</p>
       <p class="hero__intro">{SITE.intro}</p>
-      <EquationTicker />
       <div class="hero__cta">
-        <HireButton />
         <a class="btn-ghost" href="/writing/">{t('home.readWriting')} <span class="arr">→</span></a>
       </div>
     </Card>
@@ -74,23 +69,14 @@ const latestJournal = journal[0];
       <a class="career__more btn-ghost" href="/work/">Case studies <span class="arr">→</span></a>
     </Card>
 
-    <!-- lab -->
-    <Card tone="violet" span="m6 l4" label={t('home.lab')} href="/lab/" class="labcard">
-      {lab.length ? (
+    <!-- lab: only once there are real demos to show, no empty-state placeholder -->
+    {lab.length > 0 && (
+      <Card tone="violet" span="m6 l4" label={t('home.lab')} href="/lab/" class="labcard">
         <ul class="lab__list" role="list">
           {lab.slice(0, 3).map((d) => <li><span class="pulse" aria-hidden="true"></span>{d.data.title}</li>)}
         </ul>
-      ) : (
-        <>
-          <div class="lab__slots" aria-hidden="true"><span></span><span></span><span></span></div>
-          <p class="muted">{t('lab.empty')}</p>
-          <ul class="chips lab__kinds" role="list">
-            {['Hugging Face Spaces', 'Gradio', 'Streamlit', 'Render APIs'].map((k) => <li class="chip">{k}</li>)}
-          </ul>
-          <p class="lab__clock kicker" aria-hidden="true">cold start <Seg value={0} /> s</p>
-        </>
-      )}
-    </Card>
+      </Card>
+    )}
 
     <!-- journal -->
     <Card tone="starlight" span="m3 l4" label={t('home.journal')} href="/journal/" class="journalcard">
@@ -103,21 +89,6 @@ const latestJournal = journal[0];
       )}
     </Card>
 
-    <!-- quote -->
-    <Card tone="lavender" span="m3 l4" label={t('home.quote')} class="quotecard">
-      <QuoteCycler />
-    </Card>
-
-    <!-- toolbox -->
-    <Card tone="cobalt" span="m6 l4" label={t('home.stack')} class="stack">
-      {Object.entries(SITE.stack).map(([group, items]) => (
-        <div class="stack__group">
-          <p class="kicker">{group}</p>
-          <ul class="chips" role="list">{items.map((i) => <li class="chip">{i}</li>)}</ul>
-        </div>
-      ))}
-    </Card>
-
     <!-- closing call -->
     <Card tone="starlight" span="m6 l12" class="closing">
       <div>
@@ -125,7 +96,6 @@ const latestJournal = journal[0];
         <p class="muted">{SITE.hire.availability}</p>
       </div>
       <div class="closing__actions">
-        <HireButton />
         <ul class="closing__links" role="list">
           {SITE.links.filter((l) => l.icon !== 'rss').map((l) => <li><a href={l.href} rel="me noopener">{l.label}</a></li>)}
         </ul>
@@ -142,11 +112,9 @@ const latestJournal = journal[0];
   .hero__last {
     font-style: italic; font-weight: 250; padding-left: 0.6em;
     background: linear-gradient(100deg, var(--lavender), var(--periwinkle) 40%, var(--starlight) 60%, var(--mauve));
-    background-size: 220% 100%;
+    background-size: 220% 100%; background-position: 78% 0;
     -webkit-background-clip: text; background-clip: text; color: transparent;
-    animation: sheen 9s ease-in-out infinite alternate;
   }
-  @keyframes sheen { to { background-position: 100% 0; } }
   .hero__tagline { font-size: var(--step-1); font-weight: 300; font-style: italic; color: var(--pearl); max-width: 34ch; }
   .hero__intro { color: var(--ink-soft); max-width: 58ch; }
   .hero__cta { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: var(--s1); }
@@ -171,25 +139,13 @@ const latestJournal = journal[0];
   .career { gap: var(--s2); }
   .career__more { align-self: flex-start; margin-top: var(--s2); }
 
-  .lab__slots { display: flex; gap: 8px; }
-  .lab__slots span { flex: 1; height: 54px; border-radius: 12px; border: 1px dashed var(--line-strong); position: relative; overflow: hidden; }
-  .lab__slots span::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--violet) 30%, transparent), transparent); transform: translateX(-100%); animation: scan 2.8s var(--ease-out) infinite; }
-  .lab__slots span:nth-child(2)::after { animation-delay: 0.4s; } .lab__slots span:nth-child(3)::after { animation-delay: 0.8s; }
-  @keyframes scan { to { transform: translateX(100%); } }
   .lab__list { display: grid; gap: 8px; padding: 0; }
-  .lab__kinds { margin-top: auto; }
-  .lab__clock { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
-  .lab__clock :global(.seg) { font-size: 1.4rem; }
   .lab__list li { display: flex; gap: 10px; align-items: center; }
   .pulse { width: 8px; height: 8px; border-radius: 50%; background: #8ef0c0; box-shadow: 0 0 0 0 #8ef0c066; animation: pulse 2s infinite; }
   @keyframes pulse { to { box-shadow: 0 0 0 10px #8ef0c000; } }
 
   .journalcard h3 { font-size: var(--step-1); }
   .clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .quotecard { min-height: 240px; }
-
-  .stack { gap: var(--s2); }
-  .stack__group { display: grid; gap: 8px; }
 
   .closing { flex-direction: column; gap: var(--s3); padding-block: var(--s4); }
   @media (min-width: 900px) { .closing { flex-direction: row; justify-content: space-between; align-items: center; } }

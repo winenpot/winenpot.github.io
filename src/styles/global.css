@@ -81,7 +81,7 @@
   button.chip { cursor: pointer; transition: background var(--dur) var(--ease-out), color var(--dur); }
   button.chip[aria-pressed='true'], button.chip:hover { background: var(--lavender); color: var(--night-0); border-color: transparent; }
 
-  /* the wave underline (animated sine) */
+  /* the wave underline — a static sine, no longer sliding every 2.4s */
   .wave-underline { position: relative; display: inline-block; }
   .wave-underline::after {
     content: '';
@@ -90,9 +90,7 @@
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8'%3E%3Cpath d='M0 4 Q5 0 10 4 T20 4 T30 4 T40 4' fill='none' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") 0 50% / 40px 100% repeat-x;
             mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8'%3E%3Cpath d='M0 4 Q5 0 10 4 T20 4 T30 4 T40 4' fill='none' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") 0 50% / 40px 100% repeat-x;
     opacity: 0.7;
-    animation: wave-slide 2.4s linear infinite;
   }
-  @keyframes wave-slide { to { -webkit-mask-position: 40px 50%; mask-position: 40px 50%; } }
 
   .btn-ghost {
     display: inline-flex; align-items: center; gap: 8px;

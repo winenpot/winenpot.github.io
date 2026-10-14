@@ -74,3 +74,18 @@ Render APIs) right on the page. It borrows govacho.com's design DNA but has its 
 2. git push.
 3. The site is live in about a minute.
 Optional: point this at an Obsidian folder later.
+
+## Docs & notes
+Project notes, plans and parked work live in `docs/`. That folder is also this
+project's Obsidian vault ("Open folder as vault" → `docs/`). Start at
+`docs/README.md`.
+
+## Parked (future TODO)
+- Wittgenstein figure: swap the footer mathematician for Wittgenstein (grey
+  trousers) and draw marks in his notebook. Blocked on image tooling (Higgsfield
+  behind a Cloudflare geo-block; the HF Space hits the free GPU cap). Details,
+  inputs and options: `docs/parked/Wittgenstein figure.md`. Inputs and scripts:
+  `assets/gen/wittgenstein/`.
+- Khayyam look-up pose: the footer is getting a single-pose Khayyam (redesign
+  plan §2b). A matching look-up pose for the cross-fade needs the same image
+  tooling.

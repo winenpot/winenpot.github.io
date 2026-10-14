@@ -1,12 +1,16 @@
 ---
 import { FLOATING } from '../config/figures';
-/** The page-wide layer of drifting math figures (behind content). */
+/**
+ * The page-wide layer of drifting math figures (behind content). No scroll
+ * parallax: it used to write --scroll to :root on every scroll frame, which
+ * restyled the whole document. Figures now only bob gently in place.
+ */
 ---
 <div class="floaters" aria-hidden="true">
   {FLOATING.map((f, i) => (
     <div
       class:list={['floater', { 'floater--desktop': f.mobile === false }]}
-      style={`--x:${f.x}%; --y:${f.y}%; --size:${f.size}px; --depth:${f.depth}; color:${f.tone}; --bob:${7 + (i % 4) * 1.7}s; --delay:${-i * 1.3}s;`}
+      style={`--x:${f.x}%; --y:${f.y}%; --size:${f.size}px; color:${f.tone}; --bob:${7 + (i % 4) * 1.7}s; --delay:${-i * 1.3}s;`}
       title={f.label}
     >
       <canvas data-figure={f.kind} data-size={f.size}></canvas>
@@ -19,15 +23,6 @@ import { FLOATING } from '../config/figures';
   const run = () => startFigures();
   // wait for Fraunces so canvas labels use it
   document.fonts?.ready ? document.fonts.ready.then(run) : run();
-
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const root = document.documentElement;
-    let raf = 0;
-    addEventListener('scroll', () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => root.style.setProperty('--scroll', String(scrollY)));
-    }, { passive: true });
-  }
 </script>
 
 <style>
@@ -36,7 +31,6 @@ import { FLOATING } from '../config/figures';
     position: absolute;
     left: var(--x); top: var(--y);
     width: var(--size); height: var(--size);
-    translate: 0 calc(var(--scroll, 0) * var(--depth) * -0.35px);
     animation: bob var(--bob) ease-in-out var(--delay) infinite alternate;
     opacity: 0.8;
   }

@@ -5,35 +5,16 @@
 //  src/config/figures.ts. Nothing else needs to change.
 // ─────────────────────────────────────────────────────────────────────
 
-type V3 = [number, number, number];
 type Draw = (ctx: CanvasRenderingContext2D, t: number, s: number, color: string) => void;
 
-const PHI = (1 + Math.sqrt(5)) / 2;
 const TAU = Math.PI * 2;
 
-function rot([x, y, z]: V3, ax: number, ay: number, az = 0): V3 {
-  let c = Math.cos(ax), s = Math.sin(ax);
-  [y, z] = [y * c - z * s, y * s + z * c];
-  c = Math.cos(ay); s = Math.sin(ay);
-  [x, z] = [x * c + z * s, -x * s + z * c];
-  c = Math.cos(az); s = Math.sin(az);
-  [x, y] = [x * c - y * s, x * s + y * c];
-  return [x, y, z];
-}
-const proj = ([x, y, z]: V3, s: number, scale: number, cam = 4.2): [number, number, number] => {
-  const k = cam / (cam - z);
-  return [s / 2 + x * scale * k, s / 2 + y * scale * k, z];
-};
 function glow(ctx: CanvasRenderingContext2D, color: string, blur = 6) {
   ctx.strokeStyle = color; ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = blur;
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 }
 function line(ctx: CanvasRenderingContext2D, a: number[], b: number[], alpha: number) {
   ctx.globalAlpha = alpha; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
-}
-function polyline(ctx: CanvasRenderingContext2D, pts: number[][]) {
-  // depth-shaded segments
-  for (let i = 1; i < pts.length; i++) line(ctx, pts[i - 1], pts[i], 0.25 + 0.6 * ((pts[i][2] + 1.6) / 3.2));
 }
 /** Centered italic label; "e^{iπ}" draws iπ as a real superscript. */
 const label = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, alpha = 0.8) => {
@@ -44,87 +25,6 @@ const label = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number
   const w = runs.reduce((a, r) => { ctx.font = font(r.sup); return a + ctx.measureText(r.s).width; }, 0);
   let cx = x - w / 2;
   for (const r of runs) { ctx.font = font(r.sup); ctx.fillText(r.s, cx, r.sup ? y - size * 0.42 : y); cx += ctx.measureText(r.s).width; }
-};
-
-/* ── dodecahedron ─────────────────────────────────────────────────── */
-const DODECA = (() => {
-  const v: V3[] = [];
-  for (const a of [-1, 1]) for (const b of [-1, 1]) for (const c of [-1, 1]) v.push([a, b, c]);
-  for (const a of [-1, 1]) for (const b of [-1, 1]) {
-    v.push([0, a / PHI, b * PHI]); v.push([a / PHI, b * PHI, 0]); v.push([a * PHI, 0, b / PHI]);
-  }
-  const e: [number, number][] = [];
-  for (let i = 0; i < v.length; i++) for (let j = i + 1; j < v.length; j++) {
-    const d = Math.hypot(v[i][0] - v[j][0], v[i][1] - v[j][1], v[i][2] - v[j][2]);
-    if (Math.abs(d - 2 / PHI) < 1e-3) e.push([i, j]);
-  }
-  return { v, e };
-})();
-const dodecahedron: Draw = (ctx, t, s, color) => {
-  glow(ctx, color, 8); ctx.lineWidth = 1.4;
-  const p = DODECA.v.map((q) => proj(rot(q, t * 0.21, t * 0.33, 0.3), s, s * 0.2));
-  for (const [i, j] of DODECA.e) line(ctx, p[i], p[j], 0.3 + 0.55 * ((p[i][2] + p[j][2] + 3.4) / 6.8));
-  for (const q of p) { ctx.globalAlpha = 0.5 + 0.4 * ((q[2] + 1.7) / 3.4); ctx.beginPath(); ctx.arc(q[0], q[1], 1.8, 0, TAU); ctx.fill(); }
-};
-
-/* ── die (tumbling cube with pips) ────────────────────────────────── */
-const PIPS: Record<number, [number, number][]> = {
-  1: [[0, 0]], 2: [[-.5, -.5], [.5, .5]], 3: [[-.5, -.5], [0, 0], [.5, .5]],
-  4: [[-.5, -.5], [.5, -.5], [-.5, .5], [.5, .5]], 5: [[-.5, -.5], [.5, -.5], [0, 0], [-.5, .5], [.5, .5]],
-  6: [[-.5, -.55], [.5, -.55], [-.5, 0], [.5, 0], [-.5, .55], [.5, .55]],
-};
-// face: normal axis/sign, the two in-plane axes, value (opposites sum to 7)
-const FACES: { n: V3; u: V3; v: V3; val: number }[] = [
-  { n: [0, 0, 1], u: [1, 0, 0], v: [0, 1, 0], val: 1 }, { n: [0, 0, -1], u: [-1, 0, 0], v: [0, 1, 0], val: 6 },
-  { n: [1, 0, 0], u: [0, 0, -1], v: [0, 1, 0], val: 3 }, { n: [-1, 0, 0], u: [0, 0, 1], v: [0, 1, 0], val: 4 },
-  { n: [0, 1, 0], u: [1, 0, 0], v: [0, 0, -1], val: 5 }, { n: [0, -1, 0], u: [1, 0, 0], v: [0, 0, 1], val: 2 },
-];
-const die: Draw = (ctx, t, s, color) => {
-  glow(ctx, color, 7); ctx.lineWidth = 1.4;
-  const ax = t * 0.5, ay = t * 0.37, az = t * 0.13, sc = s * 0.2;
-  for (const f of FACES) {
-    const nz = rot(f.n, ax, ay, az)[2];
-    const corners = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) =>
-      proj(rot([f.n[0] + a * f.u[0] + b * f.v[0], f.n[1] + a * f.u[1] + b * f.v[1], f.n[2] + a * f.u[2] + b * f.v[2]], ax, ay, az), s, sc));
-    ctx.globalAlpha = nz > 0 ? 0.85 : 0.18;
-    ctx.beginPath(); corners.forEach((c, i) => (i ? ctx.lineTo(c[0], c[1]) : ctx.moveTo(c[0], c[1]))); ctx.closePath(); ctx.stroke();
-    if (nz > 0) {
-      ctx.globalAlpha = 0.06 + nz * 0.08; ctx.fill();
-      ctx.globalAlpha = 0.55 + nz * 0.45;
-      for (const [a, b] of PIPS[f.val]) {
-        const q = proj(rot([f.n[0] * 1.001 + a * 1.1 * f.u[0] + b * 1.1 * f.v[0], f.n[1] * 1.001 + a * 1.1 * f.u[1] + b * 1.1 * f.v[1], f.n[2] * 1.001 + a * 1.1 * f.u[2] + b * 1.1 * f.v[2]], ax, ay, az), s, sc);
-        ctx.beginPath(); ctx.ellipse(q[0], q[1], s * 0.022 * (0.4 + nz * 0.6) + 0.6, s * 0.022, 0, 0, TAU); ctx.fill();
-      }
-    }
-  }
-};
-
-/* ── Möbius strip ─────────────────────────────────────────────────── */
-const mobius: Draw = (ctx, t, s, color) => {
-  glow(ctx, color, 6); ctx.lineWidth = 1.1;
-  const P = (u: number, v: number): V3 => {
-    const r = 1 + (v / 2) * Math.cos(u / 2);
-    return [r * Math.cos(u), r * Math.sin(u), (v / 2) * Math.sin(u / 2)];
-  };
-  const R = (q: V3) => proj(rot(q, 1.0 + Math.sin(t * 0.3) * 0.3, t * 0.25, 0.2), s, s * 0.27);
-  for (const v of [-0.8, -0.4, 0, 0.4, 0.8]) {
-    const pts = []; for (let i = 0; i <= 120; i++) pts.push(R(P((i / 120) * TAU, v)));
-    polyline(ctx, pts);
-  }
-  for (let i = 0; i < 48; i++) { const u = (i / 48) * TAU + t * 0.2; const a = R(P(u, -0.8)), b = R(P(u, 0.8)); line(ctx, a, b, 0.2 + 0.4 * ((a[2] + 1.5) / 3)); }
-};
-
-/* ── Klein bottle (figure-8 immersion) ────────────────────────────── */
-const klein: Draw = (ctx, t, s, color) => {
-  glow(ctx, color, 5); ctx.lineWidth = 0.9;
-  const r = 2;
-  const P = (u: number, v: number): V3 => {
-    const k = r + Math.cos(u / 2) * Math.sin(v) - Math.sin(u / 2) * Math.sin(2 * v);
-    return [k * Math.cos(u), k * Math.sin(u), Math.sin(u / 2) * Math.sin(v) + Math.cos(u / 2) * Math.sin(2 * v)];
-  };
-  const R = (q: V3) => proj(rot(q, 1.1, t * 0.22, t * 0.05), s, s * 0.13, 8);
-  for (let j = 0; j < 10; j++) { const v = (j / 10) * TAU; const pts = []; for (let i = 0; i <= 90; i++) pts.push(R(P((i / 90) * TAU, v))); polyline(ctx, pts); }
-  for (let j = 0; j < 22; j++) { const u = (j / 22) * TAU; const pts = []; for (let i = 0; i <= 40; i++) pts.push(R(P(u, (i / 40) * TAU))); polyline(ctx, pts); }
 };
 
 /* ── Gaussian: samples fall and build the bell ────────────────────── */
@@ -160,45 +60,6 @@ const gauss: Draw = (ctx, t, s, color) => {
   ctx.stroke();
   ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.moveTo(x0, base + 0.5); ctx.lineTo(x1, base + 0.5); ctx.stroke();
   label(ctx, 'N(μ, σ²)', s / 2, s * 0.92, s * 0.075);
-};
-
-/* ── Antikythera-style gear train ─────────────────────────────────── */
-function gear(ctx: CanvasRenderingContext2D, cx: number, cy: number, n: number, m: number, a: number, spokes = 4) {
-  const rp = (n * m) / 2, ro = rp + m * 0.9, ri = rp - m * 1.0;
-  ctx.beginPath();
-  for (let i = 0; i < n; i++) {
-    const b = a + (i / n) * TAU, w = TAU / n;
-    const pts = [[ri, b - w * 0.5], [ri, b - w * 0.22], [ro, b - w * 0.12], [ro, b + w * 0.12], [ri, b + w * 0.22]];
-    pts.forEach(([r, ang], k) => { const x = cx + r * Math.cos(ang), y = cy + r * Math.sin(ang); i === 0 && k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
-  }
-  ctx.closePath(); ctx.globalAlpha = 0.1; ctx.fill(); ctx.globalAlpha = 0.85; ctx.stroke();
-  ctx.globalAlpha = 0.55; ctx.beginPath(); ctx.arc(cx, cy, ri * 0.82, 0, TAU); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx, cy, m * 1.2, 0, TAU); ctx.stroke();
-  for (let k = 0; k < spokes; k++) { const b = a + (k / spokes) * TAU; ctx.beginPath(); ctx.moveTo(cx + m * 1.2 * Math.cos(b), cy + m * 1.2 * Math.sin(b)); ctx.lineTo(cx + ri * 0.82 * Math.cos(b), cy + ri * 0.82 * Math.sin(b)); ctx.stroke(); }
-}
-const antikythera: Draw = (ctx, t, s, color) => {
-  glow(ctx, color, 5); ctx.lineWidth = 1.1;
-  const m = s * 0.016;
-  const g1 = { n: 38, x: s * 0.42, y: s * 0.46 };
-  const n2 = 16, a2 = -0.35, n3 = 24, a3 = 1.15;
-  const d12 = ((g1.n + n2) * m) / 2;
-  const g2 = { x: g1.x + d12 * Math.cos(a2), y: g1.y + d12 * Math.sin(a2) };
-  const d23 = ((n2 + n3) * m) / 2;
-  const g3 = { x: g2.x + d23 * Math.cos(a3), y: g2.y + d23 * Math.sin(a3) };
-  const th1 = t * 0.25;
-  const th2 = -(g1.n / n2) * (th1 - a2) + a2 + Math.PI - Math.PI / n2;
-  const th3 = -(n2 / n3) * (th2 - a3) + a3 + Math.PI - Math.PI / n3;
-  // the zodiac dial around the great wheel
-  const rd = (g1.n * m) / 2 + m * 2.6;
-  ctx.globalAlpha = 0.35; ctx.beginPath(); ctx.arc(g1.x, g1.y, rd, 0, TAU); ctx.stroke();
-  for (let i = 0; i < 72; i++) { const b = (i / 72) * TAU; const l = i % 6 ? m * 0.6 : m * 1.4; line(ctx, [g1.x + rd * Math.cos(b), g1.y + rd * Math.sin(b)], [g1.x + (rd - l) * Math.cos(b), g1.y + (rd - l) * Math.sin(b)], 0.45); }
-  gear(ctx, g1.x, g1.y, g1.n, m, th1, 4);
-  gear(ctx, g2.x, g2.y, n2, m, th2, 3);
-  gear(ctx, g3.x, g3.y, n3, m, th3, 5);
-  // pointer on the great wheel
-  ctx.globalAlpha = 0.95; ctx.lineWidth = 1.6;
-  line(ctx, [g1.x, g1.y], [g1.x + rd * 0.95 * Math.cos(th1 * 0.4), g1.y + rd * 0.95 * Math.sin(th1 * 0.4)], 0.95);
-  ctx.beginPath(); ctx.arc(g1.x + rd * Math.cos(th1 * 0.4), g1.y + rd * Math.sin(th1 * 0.4), 2.6, 0, TAU); ctx.fill();
 };
 
 /* ── Fibonacci squares + golden spiral ────────────────────────────── */
@@ -256,7 +117,7 @@ const euler: Draw = (ctx, t, s, color) => {
   ctx.textAlign = 'center'; ctx.fillText('e = ' + E_DIGITS.slice(0, Math.min(nd, 18)) + (nd < 18 ? '' : '…'), s / 2, s * 0.92);
 };
 
-export const FIGURES: Record<string, Draw> = { dodecahedron, die, mobius, klein, gauss, antikythera, fibonacci, euler };
+export const FIGURES: Record<string, Draw> = { gauss, fibonacci, euler };
 export type FigureKind = keyof typeof FIGURES;
 
 /** One shared loop for every [data-figure] canvas; pauses off-screen. */

@@ -21,16 +21,17 @@ const active = (href: string) => path === href || path.startsWith(href);
         </a>
       ))}
     </nav>
-    <HireButton size="sm" class="nav__hire" />
+    <HireButton class="nav__hire" />
   </div>
 </header>
 
 <style>
   .nav { position: sticky; top: 0; z-index: var(--z-nav); padding-block: 12px; }
   .nav::before {
+    /* a solid gradient, not backdrop-filter: blur — that re-blurred the
+       animated starfield behind it on every frame. */
     content: ''; position: absolute; inset: 0; z-index: -1;
-    background: linear-gradient(to bottom, rgb(10 11 28 / 0.85), rgb(10 11 28 / 0.4) 70%, transparent);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    background: linear-gradient(to bottom, rgb(10 11 28 / 0.92), rgb(10 11 28 / 0.55) 70%, transparent);
     -webkit-mask: linear-gradient(to bottom, #000 70%, transparent); mask: linear-gradient(to bottom, #000 70%, transparent);
   }
   .nav__inner { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'brand hire' 'links links'; align-items: center; gap: 8px 16px; }

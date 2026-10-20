@@ -1,0 +1,44 @@
+---
+/**
+ * A clickable number (replaces the <Seg> seven-segment LCD). Renders in
+ * the display font with tabular numerals; counts up from 0 the first time
+ * it scrolls into view, and replays a damped digit-wobble on click, tap,
+ * Enter or Space (see scripts/num.ts). <Num value={6} pad={2} label="years" />
+ */
+interface Props { value: number; pad?: number; label?: string; class?: string }
+const { value, pad = 2, label, class: cls } = Astro.props;
+const text = String(value).padStart(pad, '0');
+---
+<button type="button" class:list={['num', cls]} data-num={value} data-pad={pad} aria-label={label ? `${value} ${label}` : String(value)}>
+  {[...text].map((d) => <span class="num__d" aria-hidden="true">{d}</span>)}
+</button>
+
+<script>
+  import { initNums } from '../scripts/num';
+  initNums();
+</script>
+
+<style is:global>
+  @layer components {
+    .num {
+      position: relative;
+      display: inline-flex;
+      vertical-align: -0.1em;
+      background: none;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      font: inherit;
+      font-family: var(--font-display);
+      font-variant-numeric: tabular-nums;
+      color: var(--starlight);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: color var(--dur);
+    }
+    /* invisible hit-slop so the touch target is >= 44px without changing layout */
+    .num::before { content: ''; position: absolute; inset: -14px -10px; }
+    .num:hover, .num:focus-visible { color: var(--pearl); }
+    .num__d { display: inline-block; transform-origin: 50% 70%; will-change: transform; }
+  }
+</style>

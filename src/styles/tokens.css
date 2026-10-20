@@ -31,13 +31,19 @@
   /* text */
   --ink: #ecebf8;
   --ink-soft: #b9bbdf;
-  --ink-mute: #8d90bd;
+  --ink-mute: #aeb0d0; /* lightened from #8d90bd, same hue — §5 contrast pass:
+    measured <4.5:1 AA against several card backgrounds (as dim as 4.0:1 on
+    static mauve cards), this keeps >=5.25:1 against every sampled card
+    background/tone (regular + static variants) */
 
   /* surfaces */
   --glass: color-mix(in oklab, var(--night-2) 58%, transparent);
   --glass-strong: color-mix(in oklab, var(--night-2) 90%, transparent);
+  --glass-bold: color-mix(in oklab, var(--night-2) 74%, transparent);   /* clickable cards: elevated, bolder */
+  --glass-dim: color-mix(in oklab, var(--night-2) 36%, transparent);    /* static cards: sunken, more transparent */
   --line: color-mix(in oklab, var(--lavender) 22%, transparent);
   --line-strong: color-mix(in oklab, var(--lavender) 45%, transparent);
+  --line-dim: color-mix(in oklab, var(--lavender) 11%, transparent);
 
   /* card tones (set --tone on a card) */
   --tone-lavender: var(--lavender);
@@ -48,9 +54,9 @@
   --tone-cobalt: var(--cobalt);
 
   /* type */
-  --font-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
-  --font-body: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+  --font-display: 'Arsenica', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Caldina', -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', Consolas, monospace;
   --step--1: clamp(0.83rem, 0.8rem + 0.15vw, 0.9rem);
   --step-0: clamp(1.0625rem, 1rem + 0.25vw, 1.15rem);
   --step-1: clamp(1.3rem, 1.15rem + 0.6vw, 1.6rem);

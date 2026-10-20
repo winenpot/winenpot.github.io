@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Card from '../components/Card.astro';
-import Seg from '../components/Seg.astro';
+import Num from '../components/Num.astro';
 import PhotoFrame from '../components/PhotoFrame.astro';
 import Timeline from '../components/Timeline.astro';
 import { SITE } from '../config/site';
@@ -33,13 +33,13 @@ const latestJournal = journal[0];
       <PhotoFrame photo={SITE.photo} />
     </Card>
 
-    <!-- LCD stats -->
+    <!-- stats -->
     <Card tone="starlight" span="m6 l4" label={t('home.stats')} class="stats">
       <dl class="stats__grid">
-        <div><dt>{t('stat.years')}</dt><dd><Seg value={years} label={t('stat.years')} /></dd></div>
-        <div><dt>{t('stat.roles')}</dt><dd><Seg value={work.length} label={t('stat.roles')} /></dd></div>
-        <div><dt>{t('stat.posts')}</dt><dd><Seg value={writing.length} label={t('stat.posts')} /></dd></div>
-        <div><dt>{t('stat.demos')}</dt><dd><Seg value={lab.length} label={t('stat.demos')} /></dd></div>
+        <div><dt>{t('stat.years')}</dt><dd><Num value={years} label={t('stat.years')} /></dd></div>
+        <div><dt>{t('stat.roles')}</dt><dd><Num value={work.length} label={t('stat.roles')} /></dd></div>
+        <div><dt>{t('stat.posts')}</dt><dd><Num value={writing.length} label={t('stat.posts')} /></dd></div>
+        <div><dt>{t('stat.demos')}</dt><dd><Num value={lab.length} label={t('stat.demos')} /></dd></div>
       </dl>
     </Card>
 
@@ -88,19 +88,6 @@ const latestJournal = journal[0];
         </>
       )}
     </Card>
-
-    <!-- closing call -->
-    <Card tone="starlight" span="m6 l12" class="closing">
-      <div>
-        <h2>{SITE.hire.headline}</h2>
-        <p class="muted">{SITE.hire.availability}</p>
-      </div>
-      <div class="closing__actions">
-        <ul class="closing__links" role="list">
-          {SITE.links.filter((l) => l.icon !== 'rss').map((l) => <li><a href={l.href} rel="me noopener">{l.label}</a></li>)}
-        </ul>
-      </div>
-    </Card>
   </section>
 </Base>
 
@@ -108,9 +95,9 @@ const latestJournal = journal[0];
   .home { padding-top: var(--s3); }
   .hero { justify-content: center; gap: var(--s2); padding-block: var(--s4); }
   .hero__name { font-size: var(--step-4); line-height: 0.95; display: grid; }
-  .hero__first { font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; font-weight: 340; }
+  .hero__first { font-weight: 400; }
   .hero__last {
-    font-style: italic; font-weight: 250; padding-left: 0.6em;
+    font-style: italic; font-weight: 400; padding-left: 0.6em;
     background: linear-gradient(100deg, var(--lavender), var(--periwinkle) 40%, var(--starlight) 60%, var(--mauve));
     background-size: 220% 100%; background-position: 78% 0;
     -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -146,12 +133,4 @@ const latestJournal = journal[0];
 
   .journalcard h3 { font-size: var(--step-1); }
   .clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-
-  .closing { flex-direction: column; gap: var(--s3); padding-block: var(--s4); }
-  @media (min-width: 900px) { .closing { flex-direction: row; justify-content: space-between; align-items: center; } }
-  .closing h2 { font-size: var(--step-3); }
-  .closing__actions { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
-  .closing__links { display: flex; gap: 16px; font-family: var(--font-mono); font-size: 0.9rem; padding: 0; }
-  .closing__links a { color: var(--ink); text-decoration: none; padding-block: 12px; }
-  .closing__links a:hover { color: var(--starlight); }
 </style>

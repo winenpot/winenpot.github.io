@@ -21,7 +21,7 @@ const label = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number
   ctx.globalAlpha = alpha; ctx.shadowBlur = 4; ctx.textAlign = 'left';
   const runs: { s: string; sup: boolean }[] = [];
   text.split(/(\^\{[^}]*\})/).forEach((p) => p && runs.push(p.startsWith('^{') ? { s: p.slice(2, -1), sup: true } : { s: p, sup: false }));
-  const font = (sup: boolean) => `italic ${sup ? size * 0.66 : size}px "Fraunces Variable", Georgia, serif`;
+  const font = (sup: boolean) => `italic ${sup ? size * 0.66 : size}px "Arsenica", Georgia, serif`;
   const w = runs.reduce((a, r) => { ctx.font = font(r.sup); return a + ctx.measureText(r.s).width; }, 0);
   let cx = x - w / 2;
   for (const r of runs) { ctx.font = font(r.sup); ctx.fillText(r.s, cx, r.sup ? y - size * 0.42 : y); cx += ctx.measureText(r.s).width; }
@@ -113,7 +113,7 @@ const euler: Draw = (ctx, t, s, color) => {
   const atPi = Math.abs(((th % TAU) + TAU) % TAU - Math.PI) < 0.35;
   label(ctx, atPi ? 'e^{iπ} + 1 = 0' : 'e^{iθ} = cos θ + i sin θ', s / 2, s * 0.8, s * (atPi ? 0.085 : 0.06), atPi ? 1 : 0.7);
   const nd = 3 + Math.floor((t * 3) % (E_DIGITS.length - 2));
-  ctx.font = `${s * 0.05}px "IBM Plex Mono", monospace`; ctx.globalAlpha = 0.6;
+  ctx.font = `${s * 0.05}px ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace`; ctx.globalAlpha = 0.6;
   ctx.textAlign = 'center'; ctx.fillText('e = ' + E_DIGITS.slice(0, Math.min(nd, 18)) + (nd < 18 ? '' : '…'), s / 2, s * 0.92);
 };
 

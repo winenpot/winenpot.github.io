@@ -25,8 +25,8 @@ const page = d.kind === 'huggingface' && d.space ? `https://huggingface.co/space
       <ul class="chips" role="list">{d.tags.map((x) => <li class="chip">{x}</li>)}</ul>
     </div>
     <div class="demo__actions">
-      <span class="demo__clock" aria-live="polite"><span data-seg="00">00</span><small class="kicker">s</small></span>
-      <button type="button" class="btn-ghost btn-solid" data-wake>{t('lab.wake')}</button>
+      <span class="demo__clock" aria-live="polite"><span class="demo__clock-num">00</span><small class="kicker">s</small></span>
+      <button type="button" class="btn-ghost" data-wake>{t('lab.wake')}</button>
       {page && <a class="btn-ghost" href={page} target="_blank" rel="noopener">{t('lab.open')} ↗</a>}
       {d.repo && <a class="btn-ghost" href={d.repo} target="_blank" rel="noopener">Code ↗</a>}
     </div>
@@ -44,17 +44,15 @@ const page = d.kind === 'huggingface' && d.space ? `https://huggingface.co/space
 </Card>
 
 <script>
-  import { segment } from '../scripts/seg';
   import { t } from '../i18n/ui';
   document.querySelectorAll<HTMLElement>('.demo').forEach((card) => {
     const btn = card.querySelector<HTMLButtonElement>('[data-wake]')!;
     const stage = card.querySelector<HTMLElement>('.demo__stage')!;
-    const clock = card.querySelector<HTMLElement>('[data-seg]')!;
-    segment(clock, '00');
+    const clock = card.querySelector<HTMLElement>('.demo__clock-num')!;
     btn.addEventListener('click', () => {
       btn.disabled = true; btn.textContent = t('lab.waking');
       const t0 = performance.now();
-      const timer = setInterval(() => segment(clock, String(Math.min(99, Math.floor((performance.now() - t0) / 1000))).padStart(2, '0')), 250);
+      const timer = setInterval(() => { clock.textContent = String(Math.min(99, Math.floor((performance.now() - t0) / 1000))).padStart(2, '0'); }, 250);
       const done = () => { clearInterval(timer); btn.textContent = '● live'; };
       const { kind, src, method, height } = stage.dataset;
       if (kind === 'api') {
@@ -89,7 +87,7 @@ const page = d.kind === 'huggingface' && d.space ? `https://huggingface.co/space
   .demo__head h2 { font-size: var(--step-2); }
   .demo__head .chips { margin-top: var(--s1); }
   .demo__actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-  .demo__clock { display: inline-flex; align-items: baseline; gap: 4px; font-size: 1.6rem; }
+  .demo__clock { display: inline-flex; align-items: baseline; gap: 4px; font-size: 1.6rem; font-variant-numeric: tabular-nums; color: var(--starlight); }
   .demo__stage :global(iframe) { width: 100%; border: 0; border-radius: var(--radius-sm); background: var(--night-1); margin-top: var(--s2); }
   .demo__api { display: grid; gap: 10px; margin-top: var(--s2); }
   .demo__api textarea, .demo__out { width: 100%; background: var(--night-1); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink); }

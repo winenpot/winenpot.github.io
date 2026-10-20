@@ -1,8 +1,5 @@
 ---
-import '@fontsource-variable/fraunces/full.css';
-import '@fontsource-variable/fraunces/full-italic.css';
-import '@fontsource/ibm-plex-mono/400.css';
-import '@fontsource/ibm-plex-mono/500.css';
+import '../styles/fonts.css';
 import 'katex/dist/katex.min.css';
 import '../styles/tokens.css';
 import '../styles/global.css';
@@ -32,6 +29,8 @@ const loc = LOCALES[locale];
     <link rel="alternate" type="application/rss+xml" title={`${SITE.name} — writing`} href="/rss.xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <meta name="theme-color" content="#10132b" />
+    <link rel="preload" href="/fonts/arsenica-regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/caldina-regular.woff2" as="font" type="font/woff2" crossorigin />
     <meta property="og:type" content={type} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />

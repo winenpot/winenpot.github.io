@@ -1,0 +1,36 @@
+/* ───────────────────────────────────────────────────────────────────
+   Self-hosted type (§3 of the redesign pass). Two families, subset to
+   Latin + the punctuation/arrow/math glyphs the site actually uses
+   (see assets/gen/cut_khayyam* siblings — the subsetting commands live
+   in git history of this pass). Regenerate from ../fonts if a weight
+   is added: pyftsubset <ttf> --flavor=woff2 --unicodes=U+0020-007E,...
+   ─────────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: 'Arsenica';
+  src: url('/fonts/arsenica-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Arsenica';
+  src: url('/fonts/arsenica-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Caldina';
+  src: url('/fonts/caldina-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Caldina';
+  src: url('/fonts/caldina-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}

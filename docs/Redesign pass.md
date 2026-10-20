@@ -109,85 +109,126 @@ End state for the home page: hero · portrait · numbers · latest writing · no
 career · journal · contact line = 8 cards (matches the target).
 **Checkpoint B:** screenshots taken at desktop width; 375 px check still pending.
 
-## §2b Footer figure: Khayyam, single pose (✅ agreed 2026-10-14, to do)
+## §2b Footer figure: Khayyam, single pose — ✅ DONE 2026-10-16
 
-Replace the footer's 1940s mathematician with **Omar Khayyam**, using the
-paintings already generated. No Higgsfield or paid tools needed. It fits the
-footer's Rubáiyát quote, and his manuscript already shows writing, so the
-"empty notebook" problem disappears.
+Replaced the footer's 1940s mathematician with **Omar Khayyam**, cut from
+`assets/gen/kd2.png` (1536×2048, writing pose, flat grey background).
 
-- Source: `assets/gen/kd2.png`, 1536×2048, writing pose, flat grey background.
-- `assets/gen/kd2-cut.png` is Higgsfield's earlier cut-out. **Don't use it
-  as-is: the remover erased the stone** (grey on grey), so he floats. It's
-  only useful as an edge reference for the turban and robe.
-- The other drafts (`kd1`, `ku1`, `ku2`) are separate generations with
-  different bodies, stones and props. They **can't** be cross-faded with kd2.
-  `ku2` also has a sky patch painted into its background.
+- Matting pipeline (`assets/gen/cut_khayyam*.py`, ad hoc venv via
+  `uv venv --python 3.12.8`, since rembg/onnxruntime have no wheels for the
+  pinned 3.14 interpreter): rembg (`isnet-general-use`) for the subject, a
+  background-difference mask restricted to the lower-left quadrant to
+  recover the stone (which rembg erased, same problem as `kd2-cut.png`),
+  unioned and cleaned to the single largest connected component (dropped
+  209 stray specks from background noise), then `pymatting.estimate_
+  foreground_ml` to decontaminate the grey fringe at the alpha edge.
+- `finish_khayyam.py`: cropped to the figure + stone with padding, graded
+  toward the dim night footer (saturation ×0.82, brightness ×0.86, shadows
+  tinted toward night-violet), resized to 900 px wide →
+  `src/assets/art/khayyam.png` (900×1151).
+- `Shore.astro`: one `<Image>`, no `k--up`/`k--down` layers, no
+  `is-looking` cycle, no hover look-up, no `thinker:lookup` dispatch.
+  `Sky.astro`'s shooting stars now run only on their own timer. Updated
+  `aspect-ratio` (900/1151), `aria-label`, and both file doc comments.
+- Removed `src/assets/art/mathematician-{down,up}.png` (git history keeps them).
+- Checked at 375 / 1440 px: stone sits on the sea's edge, no halo, no overlap with footer text.
+- Bundled in here (was pending since §2): the closing-card → quiet contact
+  line merge. Removed the home page's `.closing` Card (duplicate Hire CTA);
+  `Shore.astro` now has a `shore__contact` line with `SITE.hire.headline`,
+  a mailto link and `SITE.hire.availability`, styled quietly between the
+  quote and the footer nav.
+- Later (parked): a matching look-up pose from kd2 by a head-only image
+  edit, for the cross-fade. Needs the same image tooling as [[Wittgenstein figure]].
 
-Tasks:
-- [ ] Build the mask locally so it keeps the stone. Combine `rembg`/BiRefNet
-      with a background-difference mask (estimate the flat grey from the
-      borders), then clean it up with morphology and feather 1–2 px. Check
-      the edges on the dark night colour.
-- [ ] Crop to the figure plus a little padding and export as
-      `src/assets/art/khayyam.png` (about 900 px wide; `astro:assets` makes the WebP).
-- [ ] Grade it toward the dim footer painting: less brightness and
-      saturation, cooler shadows. Keep the soft lavender rim (drop-shadow).
-- [ ] `Shore.astro`: show one image. Remove the `k--up` layer, the
-      `is-looking` cycle and the hover look-up. Shooting stars stay on
-      `Sky.astro`'s own timer, and the `thinker:lookup` dispatch goes.
-      Update the `aspect-ratio`, the `aria-label` (Omar Khayyam writing in a
-      manuscript on a stone) and the doc comment. Fix the comment in
-      `Sky.astro` too.
-- [ ] Remove `src/assets/art/mathematician-{down,up}.png` from `src/` (git
-      history keeps them).
-- [ ] Check at 375 / 1440 px: placement next to the quote, no halo, feet and
-      stone sitting on the sea's bottom edge.
-- Later (parked): a matching **look-up pose** made from kd2 by a head-only
-      image edit. Once it exists, bring back the cross-fade. It needs the same
-      image tooling as [[Wittgenstein figure]].
+## §2c Card elevation system (user request, 2026-10-16) — ✅ DONE
 
-## §3 Typography
+Every card site-wide (they all go through `Card.astro`) now reads as one
+of two kinds, decided purely by whether it has an `href`:
 
-- Build a temporary **specimen page** (`src/pages/specimen.astro`, deleted
-  after the pick). It shows real site text: name, tagline, a paragraph, card
-  labels, the numbers 06/01/00, and math glyphs (π φ σ μ ∑ ∫ √ ≈ ≤ → ·).
-  Show 3–4 pairings side by side.
-- Candidates found in `../fonts` with full Latin and math coverage:
-  - Serif/display: Arsenica (14 styles), Lyon (one weight only, so no).
-  - Sans: Source Sans Pro, Caldina, Bw Surco, PF Din Text Universal.
-  - Persian+Latin families with license files: Dibaj, Anjoman Max, Peyda, Yekan
-    Bakh. These would also be ready for a future Persian locale (`i18n/` already
-    supports `dir`).
-- Roles: **at most 2 families**, display/numerals and body. Card labels use the
-  body font with tracking. Code stays on the system mono stack (no download).
-- Ship: subset to Latin plus the math glyphs with `pyftsubset`, output WOFF2,
-  self-host under `public/fonts/` or `src/assets/fonts/`. Use
-  `font-display: swap`, preload the 1–2 critical files, and keep the **total
-  font weight at or under ~120 KB**. Remove `@fontsource-variable/fraunces`
-  and `@fontsource/ibm-plex-mono`, plus the `'opsz'/'SOFT'/'WONK'` settings
-  in the CSS.
+- **Clickable** (`.card--link`): bolder tone in the background gradient,
+  baseline (un-reduced) glass transparency (`--glass-bold`), a solid tone
+  border, and an outward drop shadow — reads as lifted off the page. Hover
+  pushes this further (existing `translateY(-4px)` + wider notch).
+- **Static** (`.card--static`, no `href`): dimmer tone, more transparent
+  glass (`--glass-dim`), a faint dashed-frame border, and an **inward**
+  box-shadow (`inset 0 3px 10px`) — reads as pressed into the page, no hover
+  state (nothing to hover).
 
-**Checkpoint C:** the user picks a pairing from the specimen screenshot.
+New tokens in `tokens.css`: `--glass-bold`, `--glass-dim`, `--line-dim`.
+`Card.astro`'s `class:list` now emits `card--link` or `card--static`
+(mutually exclusive) instead of a conditional `card--link` only.
+Verified on the home bento (hero/portrait/stats/now are static and sit
+duller; latest-writing/journal/lab pop forward) and on `/writing/`'s post
+list (all clickable, all elevated).
 
-## §4 Numbers (replaces the seven-segment LCD)
 
-- New `<Num value pad label>` component that renders the digits in the chosen
-  display font with `tabular-nums`. Keep the cheap count-up when it scrolls
-  into view.
-- **Click, tap, Enter or Space**: each digit does a damped rotational
-  oscillation, θ(t) = A·e^(−ζt)·sin(ωt), with A ≈ 18°, ω ≈ 2π·3 Hz and ζ
-  chosen so it settles in about 900 ms. Digits start about 60 ms apart (a
-  "very small interval"), and a re-click restarts it cleanly.
-  - Implemented as WAAPI keyframes sampled from θ(t), transform only, so it
-    stays on the compositor.
-  - `prefers-reduced-motion`: a single small scale pulse instead.
-- Accessible: a real `<button>` with an `aria-label` like "6 years in ML", a
-  visible focus ring and a 44 px target.
-- Replace every `<Seg>` (home stats; the lab clock goes away with §2), then
-  delete `Seg.astro` and `scripts/seg.ts`.
+## §3 Typography — ✅ DONE 2026-10-16
 
-**Checkpoint D:** the user tries the interaction live.
+- Specimen page (`src/pages/specimen.astro`, now deleted) showed 4
+  pairings, all on **Arsenica** for display/numerals (the only serif in
+  `../fonts` with full Latin coverage and enough weights) against each
+  sans candidate for body text: Source Sans Pro, Caldina, Bw Surco, PF Din
+  Text Universal. **User picked B — Arsenica + Caldina.**
+- Subset with `pyftsubset` (`assets/gen/.venv-font`, uv + fonttools +
+  brotli, since the pinned 3.14 interpreter doesn't need to match for a
+  pure-Python tool): Latin + Latin-1 + general punctuation + arrows/math
+  operators for Arsenica (checked actual glyph coverage first — Arsenica
+  has ∫ ≈ ≤ → · but not π φ σ μ √; those fall through to the `serif`
+  fallback in `--font-display`, which is fine, that's what font-stack
+  fallback is for), Latin + Latin-1 + punctuation only for Caldina (body
+  text doesn't need math glyphs). 4 files, WOFF2: Arsenica regular/italic,
+  Caldina regular/italic — **116 KB total**, under the ~120 KB budget.
+  Only one weight each, so odd Fraunces-variable-axis weights (380, 340,
+  250, 300 for `em`/italic accents) got simplified to 400 everywhere;
+  the browser just uses the single registered face regardless.
+- Self-hosted at `public/fonts/*.woff2`, declared in `src/styles/fonts.css`
+  (`font-display: swap`), imported from `Base.astro`. Preloaded the two
+  regular weights (`arsenica-regular.woff2`, `caldina-regular.woff2`) —
+  the ones needed above the fold on every page.
+- `tokens.css`: `--font-display: 'Arsenica', ...`, `--font-body: 'Caldina',
+  ...`. `--font-mono` dropped IBM Plex Mono for the system mono stack
+  (`ui-monospace, SFMono-Regular, Cascadia Mono, Consolas, monospace`) —
+  no download, matches "code stays on system mono stack".
+- Removed `@fontsource-variable/fraunces` and `@fontsource/ibm-plex-mono`
+  from `package.json` (`pnpm remove`), and every `font-variation-settings`
+  ('opsz'/'SOFT'/'WONK') in `global.css`, `Nav.astro`, `index.astro` — dead
+  on a static font.
+- Verified on `/`, `/about/`: Arsenica on h1-h4 and the hero name, Caldina
+  on body copy and taglines, no failed font requests, no fraunces/plex-mono
+  left in the network panel.
+
+**Checkpoint C:** done — B picked from screenshots.
+
+## §4 Numbers (replaces the seven-segment LCD) — ✅ DONE 2026-10-16
+
+- `Num.astro`: a real `<button type="button">`, digits in `--font-display`
+  (Arsenica) with `tabular-nums`, `aria-label` like "6 years in ML" (matches
+  the plan's example verbatim). 44px+ touch target via an absolutely
+  positioned `::before` hit-slop, so it doesn't change the tight digit
+  layout. No custom `:focus-visible` — inherits the site-wide outline rule.
+- `scripts/num.ts`: on first scroll into view (`IntersectionObserver`,
+  threshold 0.4, same cubic-ease timing as the old `seg.ts`), counts up
+  from 0. On click/tap — and Enter/Space for free, since it's a native
+  `<button>` — every digit replays a damped rotational wobble,
+  θ(t) = A·e^(−ζt)·sin(ωt) with A = 18°, ω = 2π·3 Hz, ζ = 5.2/s (tuned so
+  the envelope is ~1% of A by 900 ms), sampled once into a WAAPI keyframe
+  list (`transform: rotate()` only, stays on the compositor). Digits start
+  60 ms apart; re-click cancels any running animation on each digit first,
+  so it restarts cleanly instead of stacking. `prefers-reduced-motion`:
+  skips the count-up and the wobble, plays one small scale-pulse instead.
+  Verified both paths with real WAAPI state (`getAnimations()`), not just
+  visually.
+- Replaced every `<Seg>` on the home stats card. `DemoEmbed.astro`'s
+  wake-up clock (ticks live seconds while a sleeping Space wakes — a
+  genuinely different widget, not a static number) dropped its dependency
+  on `scripts/seg.ts` too, now just a plain `tabular-nums` text node with
+  `setInterval`, so `Seg.astro` and `scripts/seg.ts` could be deleted
+  outright with no remaining references.
+
+**Checkpoint D:** verified programmatically (WAAPI `getAnimations()` state
+for both the normal and reduced-motion paths) since a single screenshot
+can't show a 900 ms animation — confirmed running/staggered and confirmed
+the reduced-motion fallback takes the pulse-only branch.
 
 ## §5 Consistency and UX
 

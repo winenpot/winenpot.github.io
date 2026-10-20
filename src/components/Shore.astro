@@ -1,25 +1,22 @@
 ---
 /**
- * The page's floor: a painted wave-sea (Higgsfield) with a 1940s
- * mathematician sitting on a stone in the bottom-left corner. He writes;
- * every so often he looks up at the stars (two painted poses cross-fade)
- * and a shooting star answers. Hovering him makes him look up too.
- * Swap the art: src/assets/art/mathematician-{down,up}.png (same canvas
- * size, transparent background, only the head should differ).
+ * The page's floor: a painted wave-sea (Higgsfield) with Omar Khayyam
+ * writing in a manuscript on a stone in the bottom-left corner — one
+ * painted pose, cut from assets/gen/kd2.png (see that script for the
+ * matting pipeline). Shooting stars run on Sky.astro's own timer.
+ * Swap the art: src/assets/art/khayyam.png (transparent background).
  */
 import { Image } from 'astro:assets';
 import shore from '../assets/art/sky-shore.png';
-import mDown from '../assets/art/mathematician-down.png';
-import mUp from '../assets/art/mathematician-up.png';
+import khayyam from '../assets/art/khayyam.png';
 import { SITE, NAV } from '../config/site';
 import { t } from '../i18n/ui';
 const year = new Date().getFullYear();
 ---
 <footer class="shore">
   <Image src={shore} alt="" widths={[960, 1600, 2048]} sizes="100vw" class="shore__sea" aria-hidden="true" />
-  <div class="shore__thinker" id="thinker" role="img" aria-label="A painted 1940s mathematician sitting on a stone, writing equations and now and then looking up at the stars">
-    <Image src={mDown} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--down" />
-    <Image src={mUp} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--up" />
+  <div class="shore__thinker" role="img" aria-label="Omar Khayyam writing in a manuscript on a stone">
+    <Image src={khayyam} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k" />
   </div>
 
   <div class="shore__inner page">
@@ -27,6 +24,11 @@ const year = new Date().getFullYear();
       <p>“Ah, but my Computations, People say,<br />Reduced the Year to better reckoning? — Nay,<br />’Twas only striking from the Calendar<br />Unborn To-morrow, and dead Yesterday.”</p>
       <cite class="kicker">Omar Khayyam · Rubáiyát, LVII (tr. FitzGerald)</cite>
     </blockquote>
+
+    <p class="shore__contact">
+      {SITE.hire.headline} <a href={`mailto:${SITE.email}?subject=${encodeURIComponent(SITE.hire.emailSubject)}`}>{SITE.email}</a>
+      <span class="muted"> · {SITE.hire.availability}</span>
+    </p>
 
     <nav class="shore__nav" aria-label="Footer">
       <a href="/">{t('nav.home')}</a>
@@ -39,22 +41,6 @@ const year = new Date().getFullYear();
     <p class="kicker shore__fine">© {year} {SITE.name} · {t('footer.built')}</p>
   </div>
 </footer>
-
-<script>
-  const k = document.getElementById('thinker');
-  if (k && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const cycle = () => {
-      setTimeout(() => {
-        k.classList.add('is-looking');
-        setTimeout(() => dispatchEvent(new CustomEvent('thinker:lookup')), 700);
-        setTimeout(() => { k.classList.remove('is-looking'); cycle(); }, 4200 + Math.random() * 1500);
-      }, 7000 + Math.random() * 8000);
-    };
-    cycle();
-    k.addEventListener('pointerenter', () => { k.classList.add('is-looking'); dispatchEvent(new CustomEvent('thinker:lookup')); });
-    k.addEventListener('pointerleave', () => k.classList.remove('is-looking'));
-  }
-</script>
 
 <style>
   .shore {
@@ -75,16 +61,13 @@ const year = new Date().getFullYear();
 
   .shore__thinker {
     position: absolute; left: clamp(-10px, 1vw, 24px); bottom: 0;
-    width: clamp(160px, 21vw, 290px); aspect-ratio: 900 / 1266;
-    z-index: 1; pointer-events: auto;
+    width: clamp(160px, 21vw, 290px); aspect-ratio: 900 / 1151;
+    z-index: 1; pointer-events: none;
     filter: drop-shadow(0 0 1.5px rgb(191 176 234 / 0.55)) drop-shadow(-6px -4px 18px rgb(154 166 236 / 0.25)) drop-shadow(0 14px 30px rgb(0 0 0 / 0.55));
     animation: breathe 5.5s ease-in-out infinite;
     transform-origin: 50% 100%;
   }
-  .k { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; transition: opacity 1.1s var(--ease-out); }
-  .k--up { opacity: 0; }
-  .is-looking .k--up { opacity: 1; }
-  .is-looking .k--down { opacity: 0; }
+  .k { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
   @keyframes breathe { 50% { transform: scaleY(1.008); } }
 
   .shore__inner {
@@ -95,9 +78,13 @@ const year = new Date().getFullYear();
   @media (max-width: 639px) { .shore__inner { padding-left: 0; padding-bottom: calc(var(--s3) + 210px); } .shore { min-height: 640px; } }
   .shore__quote p { font-style: italic; font-weight: 300; font-size: var(--step-1); line-height: 1.45; color: var(--pearl); max-width: 32ch; text-shadow: 0 2px 16px rgb(10 11 28 / 0.8); }
   .shore__quote cite { display: block; margin-top: var(--s1); font-style: normal; }
+  .shore__contact { max-width: 46ch; color: var(--ink-soft); font-size: 0.95rem; }
+  .shore__contact a { color: var(--pearl); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+  .shore__contact a:hover, .shore__contact a:focus-visible { color: var(--starlight); }
+  .shore__contact .muted { color: var(--ink-mute); }
   .shore__nav, .shore__links { display: flex; flex-wrap: wrap; gap: 6px 20px; font-family: var(--font-mono); font-size: 0.9rem; }
   .shore__links { list-style: none; padding: 0; }
-  .shore__nav a, .shore__links a { color: var(--ink); text-decoration: none; padding-block: 10px; }
+  .shore__nav a, .shore__links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); text-decoration: none; }
   .shore__nav a:hover, .shore__links a:hover { color: var(--starlight); }
   .shore__fine { font-size: 0.75rem; }
 </style>

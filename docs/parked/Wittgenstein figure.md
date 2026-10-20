@@ -1,7 +1,7 @@
 ---
 project: winenpot.github.io
 type: task
-status: live-up-pose-pending
+status: parked
 created: 2026-10-14
 ---
 
@@ -82,11 +82,16 @@ Back to [[README]]
   - **User's pick: `wf-kontext-stitch-7-left.png`.** One `touchup.py` pass
     removed its moustache cleanly → `wf-stitch-7-shaved.png` (880×1168,
     enough for the 290 px CSS / 580 px @2x footer slot).
-  - **Swapped in 2026-10-20.** `Shore.astro` again uses two cross-fading
-    poses, `wittgenstein-{down,up}.png`. The look-up cycle, the hover
-    trigger and the `thinker:lookup` event that makes `Sky.astro` shoot a
-    meteor are all back. Cut-out: `cut_wittgenstein.py`, which uses one
-    shared crop box for both poses.
+  - **Swapped in 2026-10-20, then parked again the same day.** The user
+    judged it not good enough yet (moustache/likeness issues, no up pose)
+    and asked to hide it until something better comes along. Rather than
+    reverting the git history, `Shore.astro` keeps both the Wittgenstein
+    and Khayyam markup/CSS/script behind a `const SHOW_WITTGENSTEIN =
+    false` flag at the top of the file — flip it to `true` to bring him
+    back, no other changes needed. The look-up cycle, hover trigger and
+    `thinker:lookup` meteor event are all intact, just inert while false.
+    Cut-out: `cut_wittgenstein.py`, which uses one shared crop box for
+    both poses.
   - **Still to do: the up pose.** The Hugging Face free quota ran out
     ("exceeded your ZeroGPU runs limit"), so for now
     `wittgenstein-up.png` is a copy of down. When the quota resets:

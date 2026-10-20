@@ -1,27 +1,37 @@
 ---
 /**
- * The page's floor: a painted wave-sea (Higgsfield) with Wittgenstein
- * sitting on a stone in the bottom-left corner. He writes; every so often
- * he looks up at the stars (two poses cross-fade) and a shooting star
- * answers. Hovering him makes him look up too.
- * Art: src/assets/art/wittgenstein-{down,up}.png, made by
- * assets/gen/wittgenstein/cut_wittgenstein.py (same canvas, transparent
- * background, only the head may differ).
+ * The page's floor: a painted wave-sea (Higgsfield) with a figure sitting
+ * on a stone in the bottom-left corner.
+ *
+ * SHOW_WITTGENSTEIN toggles which figure renders. Wittgenstein (two poses,
+ * look-up cross-fade, shooting-star trigger) is finished but parked — see
+ * docs/parked/Wittgenstein figure.md — because the "up" pose isn't done
+ * (Hugging Face free quota) and the likeness needs another pass. Flip the
+ * flag back to true once that's resolved; nothing else needs to change.
+ * Default is Khayyam, single static pose, cut from assets/gen/kd2.png.
  */
 import { Image } from 'astro:assets';
 import shore from '../assets/art/sky-shore.png';
+import khayyam from '../assets/art/khayyam.png';
 import wDown from '../assets/art/wittgenstein-down.png';
 import wUp from '../assets/art/wittgenstein-up.png';
 import { SITE, NAV } from '../config/site';
 import { t } from '../i18n/ui';
 const year = new Date().getFullYear();
+const SHOW_WITTGENSTEIN = false;
 ---
 <footer class="shore">
   <Image src={shore} alt="" widths={[960, 1600, 2048]} sizes="100vw" class="shore__sea" aria-hidden="true" />
-  <div class="shore__thinker" id="thinker" role="img" aria-label="Ludwig Wittgenstein sitting on a stone, writing in a notebook and now and then looking up at the stars" style={`aspect-ratio: ${wDown.width} / ${wDown.height}`}>
-    <Image src={wDown} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--down" />
-    <Image src={wUp} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--up" />
-  </div>
+  {SHOW_WITTGENSTEIN ? (
+    <div class="shore__thinker" id="thinker" role="img" aria-label="Ludwig Wittgenstein sitting on a stone, writing in a notebook and now and then looking up at the stars" style={`aspect-ratio: ${wDown.width} / ${wDown.height}`}>
+      <Image src={wDown} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--down" />
+      <Image src={wUp} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--up" />
+    </div>
+  ) : (
+    <div class="shore__thinker" role="img" aria-label="Omar Khayyam writing in a manuscript on a stone">
+      <Image src={khayyam} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k" />
+    </div>
+  )}
 
   <div class="shore__inner page">
     <blockquote class="shore__quote">
@@ -46,9 +56,9 @@ const year = new Date().getFullYear();
   </div>
 </footer>
 
-<script>
+<script define:vars={{ SHOW_WITTGENSTEIN }}>
   const k = document.getElementById('thinker');
-  if (k && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (SHOW_WITTGENSTEIN && k && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const cycle = () => {
       setTimeout(() => {
         if (document.hidden) return cycle();
@@ -82,7 +92,7 @@ const year = new Date().getFullYear();
 
   .shore__thinker {
     position: absolute; left: clamp(-10px, 1vw, 24px); bottom: 0;
-    width: clamp(160px, 21vw, 290px);
+    width: clamp(160px, 21vw, 290px); aspect-ratio: 900 / 1151;
     z-index: 1; pointer-events: auto;
     filter: drop-shadow(0 0 1.5px rgb(191 176 234 / 0.55)) drop-shadow(-6px -4px 18px rgb(154 166 236 / 0.25)) drop-shadow(0 14px 30px rgb(0 0 0 / 0.55));
     animation: breathe 5.5s ease-in-out infinite;

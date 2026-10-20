@@ -41,19 +41,21 @@ the only warm note. Govacho bento DNA: dashed inner frame (the corner notch was 
 math-notebook layer on top: three canvas figures (Euler, Gaussian, Fibonacci)
 and a career wave. The colours stay. Type is self-hosted Arsenica (display,
 numerals) + Caldina (body). Stats are clickable numbers with a damped wobble.
-The footer has Wittgenstein on a stone, with Khayyam's quote kept.
+The footer has Khayyam on a stone; a finished Wittgenstein alternative is
+parked behind a flag in `Shore.astro` (see docs/parked).
 
 ## Notes
 
 - [[Redesign pass]]: the 2026-10-14 redesign, now live. Its "Remaining
   before calling it finished" list (OG image, sample posts, portrait, §5
   UX pass) is the to-do list.
-- [[Wittgenstein figure]]: live in the footer since 2026-10-20. The
-  generation pipeline (free FLUX.1 Kontext on Hugging Face) is documented there.
+- [[Wittgenstein figure]]: built, parked again 2026-10-20 (not good enough
+  yet). Hidden behind a flag in `Shore.astro`, not reverted — easy to
+  bring back once the likeness and the up pose are fixed.
 
 ## Parked / future TODO
 
-- [ ] Wittgenstein **up pose**. For now it's a copy of the down pose, so the
-      cross-fade shows no change. Waiting on the Hugging Face free quota.
-      Steps are in [[Wittgenstein figure]].
+- [ ] [[Wittgenstein figure]]: likeness needs another pass (moustache keeps
+      reappearing) and the up pose isn't generated yet (Hugging Face free
+      quota). Flip `SHOW_WITTGENSTEIN` in `Shore.astro` once it's ready.
 - [ ] Marks/drawings on his notebook page (PIL, no model needed).

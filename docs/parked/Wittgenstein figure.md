@@ -62,6 +62,42 @@ Back to [[README]]
   `prithivMLmods/Qwen-Image-Edit-2511-LoRAs-Fast` (8-step Lightning, probably
   under the cap), and `black-forest-labs/FLUX.1-Kontext-Dev`.
 
+## HF attempt 2026-10-20 (single pose, base = `assets/gen/kd2.png`)
+
+- `multimodalart/Qwen-Image-Edit-Fast`: every call returns "ZeroGPU worker
+  error / RuntimeError", even for a trivial prompt. The Space is broken server-side.
+- `prithivMLmods/...-LoRAs-Fast`: takes several images, but each call has to
+  pick one of its style LoRAs. Not tried.
+- **`black-forest-labs/FLUX.1-Kontext-Dev` works**, about 35 s per call, free,
+  output 880×1168. Scripts: `gen_fast.py` (text or stitch mode), `touchup.py`
+  (a second instruction pass).
+  - Text-only beats stitching in the reference photo. Stitched output is
+    lower resolution, more photographic, and gives no better likeness.
+  - Stone, pose, notebook, pen, tweed, mustard shirt, grey trousers and
+    shoes all came out right on the first try.
+  - Facial hair is the problem. The prompt must never name "moustache" or
+    "beard" (FLUX has no negative prompt). Even so, Kontext tends to keep
+    Khayyam's beard (seed 7). Best so far is `wf-v3-21-shaved.png`: a faint
+    moustache shadow remains, and the hair is too long and big.
+  - **User's pick: `wf-kontext-stitch-7-left.png`.** One `touchup.py` pass
+    removed its moustache cleanly → `wf-stitch-7-shaved.png` (880×1168,
+    enough for the 290 px CSS / 580 px @2x footer slot).
+  - **Swapped in 2026-10-20.** `Shore.astro` again uses two cross-fading
+    poses, `wittgenstein-{down,up}.png`. The look-up cycle, the hover
+    trigger and the `thinker:lookup` event that makes `Sky.astro` shoot a
+    meteor are all back. Cut-out: `cut_wittgenstein.py`, which uses one
+    shared crop box for both poses.
+  - **Still to do: the up pose.** The Hugging Face free quota ran out
+    ("exceeded your ZeroGPU runs limit"), so for now
+    `wittgenstein-up.png` is a copy of down. When the quota resets:
+    `touchup.py wf-stitch-7-shaved.png wf-up-7.png "<look up at the night sky…>"`,
+    then paste only the head into a copy of the down pose so the body
+    stays pixel-identical, then
+    `cut_wittgenstein.py down=wf-stitch-7-shaved.png up=<that file>`.
+  - Next: crop the head and run a `touchup.py` pass on the crop ("short
+    cropped hair"), or mask the lip and paint it out in Krita. Then cut it
+    out with the Khayyam pipeline.
+
 ## Options when we come back (cheapest first)
 
 1. A Fast Qwen Space: one free test call, `gen.py` with a different Space id or steps.

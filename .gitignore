@@ -9,3 +9,6 @@ assets/gen/run.log
 docs/.obsidian/workspace*.json
 docs/.obsidian/cache
 assets/gen/wittgenstein/figure-*.png
+assets/gen/wittgenstein/wf-*.png
+assets/gen/wittgenstein/in-*.png
+assets/gen/wittgenstein/compare-*.png

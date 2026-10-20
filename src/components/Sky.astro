@@ -3,7 +3,7 @@
  * The fixed backdrop: a painted symbolist sky (Higgsfield, Ciurlionis x
  * Feininger) under a living star field. Stars twinkle, link into
  * constellations near the pointer (a little graph theory), and a shooting
- * star crosses now and then, on its own schedule.
+ * star crosses now and then, and always when the footer thinker looks up.
  */
 import { Image } from 'astro:assets';
 import skyTop from '../assets/art/sky-top.png';
@@ -101,6 +101,7 @@ import skyTop from '../assets/art/sky-top.png';
   addEventListener('resize', resize);
   addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
   document.addEventListener('pointerleave', () => { mouse.x = mouse.y = -999; });
+  addEventListener('thinker:lookup', () => shoot());
   if (!reduce) {
     const schedule = () => setTimeout(() => { if (!document.hidden) shoot(); schedule(); }, 9000 + Math.random() * 9000);
     schedule();

@@ -41,21 +41,27 @@ the only warm note. Govacho bento DNA: dashed inner frame (the corner notch was 
 math-notebook layer on top: three canvas figures (Euler, Gaussian, Fibonacci)
 and a career wave. The colours stay. Type is self-hosted Arsenica (display,
 numerals) + Caldina (body). Stats are clickable numbers with a damped wobble.
-The footer has Khayyam on a stone; a finished Wittgenstein alternative is
-parked behind a flag in `Shore.astro` (see docs/parked).
+The footer currently shows no figure (user's choice, 2026-10-20); the
+original animated 1940s mathematician, Khayyam, and a parked Wittgenstein
+alternative all sit dormant behind a `FOOTER_FIGURE` flag in `Shore.astro`.
 
 ## Notes
 
 - [[Redesign pass]]: the 2026-10-14 redesign, now live. Its "Remaining
   before calling it finished" list (OG image, sample posts, portrait, §5
   UX pass) is the to-do list.
-- [[Wittgenstein figure]]: built, parked again 2026-10-20 (not good enough
-  yet). Hidden behind a flag in `Shore.astro`, not reverted — easy to
-  bring back once the likeness and the up pose are fixed.
+- [[Wittgenstein figure]]: built, parked 2026-10-20 (not good enough yet).
+  The footer currently shows no figure at all — see `Shore.astro`'s
+  `FOOTER_FIGURE` flag, which also still has the original 1940s
+  mathematician (the user's favourite of the three, fully animated) and
+  Khayyam as dormant options.
 
 ## Parked / future TODO
 
 - [ ] [[Wittgenstein figure]]: likeness needs another pass (moustache keeps
       reappearing) and the up pose isn't generated yet (Hugging Face free
-      quota). Flip `SHOW_WITTGENSTEIN` in `Shore.astro` once it's ready.
+      quota).
+- [ ] Footer figure: empty for now by the user's choice. `Shore.astro`'s
+      `FOOTER_FIGURE` constant picks `'none' | 'mathematician' | 'khayyam'
+      | 'wittgenstein'` — switching is a one-line change.
 - [ ] Marks/drawings on his notebook page (PIL, no model needed).

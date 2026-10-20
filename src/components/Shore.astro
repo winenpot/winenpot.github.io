@@ -1,39 +1,55 @@
 ---
 /**
- * The page's floor: a painted wave-sea (Higgsfield) with a figure sitting
- * on a stone in the bottom-left corner.
+ * The page's floor: a painted wave-sea (Higgsfield) with, optionally, a
+ * painted figure sitting on a stone in the bottom-left corner, writing.
  *
- * SHOW_WITTGENSTEIN toggles which figure renders. Wittgenstein (two poses,
- * look-up cross-fade, shooting-star trigger) is finished but parked — see
- * docs/parked/Wittgenstein figure.md — because the "up" pose isn't done
- * (Hugging Face free quota) and the likeness needs another pass. Flip the
- * flag back to true once that's resolved; nothing else needs to change.
- * Default is Khayyam, single static pose, cut from assets/gen/kd2.png.
+ * FOOTER_FIGURE picks which one renders: 'none' | 'mathematician' |
+ * 'khayyam' | 'wittgenstein'. Default is 'none' — the user preferred an
+ * empty corner over any of the three for now. All three are fully wired
+ * and just dormant:
+ *   - 'mathematician': the original pair, two poses (look-up cross-fade on
+ *     a timer + hover, fires Sky.astro's shooting star). Complete, this is
+ *     the one with working animation the user liked best.
+ *   - 'khayyam': single static pose, cut from assets/gen/kd2.png.
+ *   - 'wittgenstein': two poses like the mathematician, but parked — the
+ *     "up" pose isn't generated yet and the likeness needs another pass.
+ *     See docs/parked/Wittgenstein figure.md.
+ * Switching back on is a one-line change, nothing else to touch.
  */
 import { Image } from 'astro:assets';
 import shore from '../assets/art/sky-shore.png';
+import mDown from '../assets/art/mathematician-down.png';
+import mUp from '../assets/art/mathematician-up.png';
 import khayyam from '../assets/art/khayyam.png';
 import wDown from '../assets/art/wittgenstein-down.png';
 import wUp from '../assets/art/wittgenstein-up.png';
 import { SITE, NAV } from '../config/site';
 import { t } from '../i18n/ui';
 const year = new Date().getFullYear();
-const SHOW_WITTGENSTEIN = false;
+type FooterFigure = 'none' | 'mathematician' | 'khayyam' | 'wittgenstein';
+const FOOTER_FIGURE = 'none' as FooterFigure;
 ---
 <footer class="shore">
   <Image src={shore} alt="" widths={[960, 1600, 2048]} sizes="100vw" class="shore__sea" aria-hidden="true" />
-  {SHOW_WITTGENSTEIN ? (
-    <div class="shore__thinker" id="thinker" role="img" aria-label="Ludwig Wittgenstein sitting on a stone, writing in a notebook and now and then looking up at the stars" style={`aspect-ratio: ${wDown.width} / ${wDown.height}`}>
-      <Image src={wDown} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--down" />
-      <Image src={wUp} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--up" />
+  {FOOTER_FIGURE === 'mathematician' && (
+    <div class="shore__thinker" id="thinker" role="img" aria-label="A painted 1940s mathematician sitting on a stone, writing equations and now and then looking up at the stars" style={`aspect-ratio: ${mDown.width} / ${mDown.height}`}>
+      <Image src={mDown} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--down" />
+      <Image src={mUp} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--up" />
     </div>
-  ) : (
+  )}
+  {FOOTER_FIGURE === 'khayyam' && (
     <div class="shore__thinker" role="img" aria-label="Omar Khayyam writing in a manuscript on a stone">
       <Image src={khayyam} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k" />
     </div>
   )}
+  {FOOTER_FIGURE === 'wittgenstein' && (
+    <div class="shore__thinker" id="thinker" role="img" aria-label="Ludwig Wittgenstein sitting on a stone, writing in a notebook and now and then looking up at the stars" style={`aspect-ratio: ${wDown.width} / ${wDown.height}`}>
+      <Image src={wDown} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--down" />
+      <Image src={wUp} alt="" widths={[260, 420, 640]} sizes="(max-width: 640px) 170px, 290px" class="k k--up" />
+    </div>
+  )}
 
-  <div class="shore__inner page">
+  <div class={`shore__inner page ${FOOTER_FIGURE === 'none' ? 'shore__inner--full' : ''}`}>
     <blockquote class="shore__quote">
       <p>“Ah, but my Computations, People say,<br />Reduced the Year to better reckoning? — Nay,<br />’Twas only striking from the Calendar<br />Unborn To-morrow, and dead Yesterday.”</p>
       <cite class="kicker">Omar Khayyam · Rubáiyát, LVII (tr. FitzGerald)</cite>
@@ -56,9 +72,9 @@ const SHOW_WITTGENSTEIN = false;
   </div>
 </footer>
 
-<script define:vars={{ SHOW_WITTGENSTEIN }}>
+<script define:vars={{ FOOTER_FIGURE }}>
   const k = document.getElementById('thinker');
-  if (SHOW_WITTGENSTEIN && k && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (FOOTER_FIGURE !== 'none' && k && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const cycle = () => {
       setTimeout(() => {
         if (document.hidden) return cycle();
@@ -110,6 +126,8 @@ const SHOW_WITTGENSTEIN = false;
     padding-left: clamp(150px, 24vw, 330px);
   }
   @media (max-width: 639px) { .shore__inner { padding-left: 0; padding-bottom: calc(var(--s3) + 210px); } .shore { min-height: 640px; } }
+  .shore__inner--full { padding-left: 0; }
+  @media (max-width: 639px) { .shore__inner--full { padding-bottom: var(--s3); } .shore:has(.shore__inner--full) { min-height: 420px; } }
   .shore__quote p { font-style: italic; font-weight: 300; font-size: var(--step-1); line-height: 1.45; color: var(--pearl); max-width: 32ch; text-shadow: 0 2px 16px rgb(10 11 28 / 0.8); }
   .shore__quote cite { display: block; margin-top: var(--s1); font-style: normal; }
   .shore__contact { max-width: 46ch; color: var(--ink-soft); font-size: 0.95rem; }

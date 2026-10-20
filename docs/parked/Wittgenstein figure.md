@@ -84,12 +84,13 @@ Back to [[README]]
     enough for the 290 px CSS / 580 px @2x footer slot).
   - **Swapped in 2026-10-20, then parked again the same day.** The user
     judged it not good enough yet (moustache/likeness issues, no up pose)
-    and asked to hide it until something better comes along. Rather than
-    reverting the git history, `Shore.astro` keeps both the Wittgenstein
-    and Khayyam markup/CSS/script behind a `const SHOW_WITTGENSTEIN =
-    false` flag at the top of the file — flip it to `true` to bring him
-    back, no other changes needed. The look-up cycle, hover trigger and
-    `thinker:lookup` meteor event are all intact, just inert while false.
+    and asked to hide it. The footer corner then went empty entirely —
+    the user preferred the original 1940s mathematician's finished
+    animation over either painted figure, so that art was restored from
+    git history (`94146c7^`) instead. `Shore.astro` now has a
+    `FOOTER_FIGURE: 'none' | 'mathematician' | 'khayyam' | 'wittgenstein'`
+    constant, currently `'none'`. All three render paths, CSS and the
+    look-up script stay in the file, inert — switching is a one-line edit.
     Cut-out: `cut_wittgenstein.py`, which uses one shared crop box for
     both poses.
   - **Still to do: the up pose.** The Hugging Face free quota ran out

@@ -5,7 +5,6 @@
    lavender, periwinkle, with pearl/starlight accents.
    ─────────────────────────────────────────────────────────────────── */
 
-@property --notch { syntax: '<length>'; inherits: true; initial-value: 22px; }
 @property --spin  { syntax: '<angle>';  inherits: false; initial-value: 0deg; }
 @property --reveal { syntax: '<length>'; inherits: false; initial-value: 0px; }
 
@@ -73,8 +72,6 @@
   /* shape */
   --radius: 26px;
   --radius-sm: 14px;
-  --notch-rest: 22px;
-  --notch-hover: 54px;
   --frame-inset: 9px;
 
   /* motion */

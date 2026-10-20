@@ -37,7 +37,7 @@ that run on the page.
 ## Design direction (short)
 
 "Ciurlionis night" palette: slate, indigo, violet, lavender, with starlight as
-the only warm note. Govacho bento DNA: notched cards, dashed inner frame. A
+the only warm note. Govacho bento DNA: dashed inner frame (the corner notch was dropped; clickable cards lift and wobble once on hover). A
 math-notebook layer on top: canvas figures, an equation ticker, a career wave.
 The user likes the colours. Fonts and the LCD digits are to be replaced. The
 page should become calmer and more minimal.

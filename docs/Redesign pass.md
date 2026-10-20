@@ -1,10 +1,29 @@
 ---
 project: winenpot.github.io
 type: plan
-status: awaiting-approval
+status: live-remaining-polish
 created: 2026-10-14
-revised: 2026-10-14
+revised: 2026-10-20
 ---
+
+> **State 2026-10-20:** §0–§4 are done, committed and live (last deploy
+> fbdac88). The "Open decisions" at the bottom were all settled. What's left
+> is in "Remaining before calling it finished" just below.
+
+## Remaining before calling it finished
+
+- [ ] Social preview image: `Base.astro` points at `/og.png`, which doesn't
+      exist yet (1200×630).
+- [ ] Sample content: `writing/hello-sky.md` and
+      `journal/2026-10-11-first-night.md` are still `sample: true`.
+- [ ] Portrait: `SITE.photo` / `SITE.aboutPhoto` are empty, so the
+      placeholder shows (waiting for `public/me.jpg`).
+- [ ] §5 consistency/UX pass, including the 375 px check (on mobile the nav
+      cuts off "About").
+- [ ] §6 perf re-measure and final screenshots.
+- [ ] Wittgenstein up pose: see [[Wittgenstein figure]].
+- [ ] Optional: `robots.txt`; decide on keeping the unused `src/assets/art/khayyam.png`
+      and the untracked intermediates in `assets/gen/`.
 
 # Redesign pass: final plan
 
@@ -254,7 +273,7 @@ the reduced-motion fallback takes the pulse-only branch.
 §1 → A → §2 → §2b → B → §3 → C → §4 → D → §5 → §6. §1, §2b and §5 need no
 input. §2 needs the declutter list approved. §3 needs a font pick.
 
-## Open decisions (defaults in bold)
+## Open decisions (settled: parallax dropped; figures Euler, Gaussian, Fibonacci; declutter all approved; kicker dropped)
 
 1. Parallax on the floating figures: **drop it** / keep it via scroll-driven CSS.
 2. Which 3 figures stay: **dodecahedron, Euler, Fibonacci** / other.

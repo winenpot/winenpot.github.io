@@ -38,20 +38,22 @@ that run on the page.
 
 "Ciurlionis night" palette: slate, indigo, violet, lavender, with starlight as
 the only warm note. Govacho bento DNA: dashed inner frame (the corner notch was dropped; clickable cards lift and wobble once on hover). A
-math-notebook layer on top: canvas figures, an equation ticker, a career wave.
-The user likes the colours. Fonts and the LCD digits are to be replaced. The
-page should become calmer and more minimal.
+math-notebook layer on top: three canvas figures (Euler, Gaussian, Fibonacci)
+and a career wave. The colours stay. Type is self-hosted Arsenica (display,
+numerals) + Caldina (body). Stats are clickable numbers with a damped wobble.
+The footer has Wittgenstein on a stone, with Khayyam's quote kept.
 
 ## Notes
 
-- [[Redesign pass]]: open work from the 2026-10-14 review (performance,
-  fonts, numbers, declutter), plus the measured performance baseline.
-- [[Wittgenstein figure]] (parked): swap the footer mathematician for
-  Wittgenstein and draw in his notebook.
+- [[Redesign pass]]: the 2026-10-14 redesign, now live. Its "Remaining
+  before calling it finished" list (OG image, sample posts, portrait, §5
+  UX pass) is the to-do list.
+- [[Wittgenstein figure]]: live in the footer since 2026-10-20. The
+  generation pipeline (free FLUX.1 Kontext on Hugging Face) is documented there.
 
 ## Parked / future TODO
 
-- [ ] [[Wittgenstein figure]]: blocked on image tooling, see the note.
-- [ ] Khayyam **look-up pose** (a head-only edit of `assets/gen/kd2.png`) to
-      bring back the footer cross-fade. Same tooling blocker. Details in
-      [[Redesign pass]] §2b.
+- [ ] Wittgenstein **up pose**. For now it's a copy of the down pose, so the
+      cross-fade shows no change. Waiting on the Hugging Face free quota.
+      Steps are in [[Wittgenstein figure]].
+- [ ] Marks/drawings on his notebook page (PIL, no model needed).

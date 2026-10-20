@@ -1,7 +1,7 @@
 ---
 project: winenpot.github.io
 type: task
-status: parked
+status: live-up-pose-pending
 created: 2026-10-14
 ---
 

@@ -2,9 +2,12 @@
 import Base from '../../layouts/Base.astro';
 import Card from '../../components/Card.astro';
 import DemoEmbed from '../../components/DemoEmbed.astro';
+import TSpanner from '../../components/demos/TSpanner.astro';
 import { getLab } from '../../lib/content';
 import { t } from '../../i18n/ui';
 const demos = await getLab();
+/** kind: 'native' demos are hand-built components, not data-driven embeds. */
+const NATIVE: Record<string, typeof TSpanner> = { 't-spanner': TSpanner };
 ---
 <Base title="Lab" description="Live experiments: Hugging Face Spaces, Gradio, Streamlit and APIs, running right on the page.">
   <header class="page-head">
@@ -13,7 +16,10 @@ const demos = await getLab();
     <p>Things you can poke. Every demo runs live — press “wake it up” and give a sleepy free server a few seconds.</p>
   </header>
   <div class="bento">
-    {demos.length ? demos.map((d) => <DemoEmbed demo={d} />) : (
+    {demos.length ? demos.map((d) => {
+      const Native = d.data.kind === 'native' && d.data.component ? NATIVE[d.data.component] : undefined;
+      return Native ? <Native demo={d} /> : <DemoEmbed demo={d} />;
+    }) : (
       <Card tone="violet" span="m6 l12" label="workbench" class="empty">
         <div class="empty__slots" aria-hidden="true">
           {['huggingface', 'gradio', 'streamlit', 'api'].map((k) => <span><i></i>{k}</span>)}

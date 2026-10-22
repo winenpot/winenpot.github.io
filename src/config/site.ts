@@ -50,7 +50,7 @@ export const SITE = {
 
   /** Contact links. Remove an entry to hide it everywhere. */
   links: [
-    { label: 'GitHub', href: 'https://github.com/couzhei', icon: 'github' },
+    { label: 'GitHub', href: 'https://github.com/winenpot', icon: 'github' },
     { label: 'Kaggle', href: 'https://www.kaggle.com/ashkanranjbar', icon: 'kaggle' },
     { label: 'LinkedIn', href: 'https://www.linkedin.com/in/ashkanranjbar', icon: 'linkedin' },
     { label: 'Email', href: 'mailto:ashkanmehravand@gmail.com', icon: 'mail' },

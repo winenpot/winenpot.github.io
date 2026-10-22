@@ -63,6 +63,9 @@ const work = defineCollection({
  *  - streamlit   : `url` of a Streamlit app (?embed=true is added)
  *  - iframe      : any embeddable `url` (Render web app, etc.)
  *  - api         : JSON API (e.g. FastAPI on Render) — `url`, `method`, `sample`
+ *  - native      : runs entirely client-side, no server to wake —
+ *                  `component` names a file in src/components/demos/
+ *                  (mapped in src/pages/lab/index.astro's NATIVE registry)
  * See src/content/lab/_example-*.md for templates.
  */
 const lab = defineCollection({
@@ -70,13 +73,14 @@ const lab = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    kind: z.enum(['huggingface', 'gradio', 'streamlit', 'iframe', 'api']),
+    kind: z.enum(['huggingface', 'gradio', 'streamlit', 'iframe', 'api', 'native']),
     space: z.string().optional(),
     url: z.string().url().optional(),
     method: z.enum(['GET', 'POST']).default('POST'),
     sample: z.string().optional(),
     height: z.number().default(620),
     repo: z.string().url().optional(),
+    component: z.string().optional(),
     tags: z.array(z.string()).default([]),
     order: z.number().default(0),
     draft: z.boolean().default(false),

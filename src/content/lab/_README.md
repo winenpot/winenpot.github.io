@@ -11,3 +11,6 @@ Kinds:
 - iframe      → `url:` of anything embeddable (e.g. a Render web app)
 - api         → `url:` + `method:` + `sample:` JSON body (e.g. FastAPI on Render).
                 The API must send CORS headers allowing https://winenpot.github.io
+- native      → `component:` names a file in src/components/demos/, registered
+                in the NATIVE map at the top of src/pages/lab/index.astro.
+                Runs client-side, no "wake it up" step. See TSpanner.astro.

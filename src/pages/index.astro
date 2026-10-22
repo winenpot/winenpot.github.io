@@ -63,7 +63,7 @@ const latestJournal = journal[0];
       </ul>
     </Card>
 
-    <!-- career wave -->
+    <!-- career wave (spans two rows on desktop: lab + journal stack beside it) -->
     <Card tone="periwinkle" span="m6 l8" label={t('home.work')} class="career">
       <Timeline items={work} />
       <a class="career__more btn-ghost" href="/work/">Case studies <span class="arr">→</span></a>
@@ -71,7 +71,7 @@ const latestJournal = journal[0];
 
     <!-- lab: only once there are real demos to show, no empty-state placeholder -->
     {lab.length > 0 && (
-      <Card tone="violet" span="m6 l4" label={t('home.lab')} href="/lab/" class="labcard">
+      <Card tone="violet" span="m3 l4" label={t('home.lab')} href="/lab/" class="labcard compact">
         <ul class="lab__list" role="list">
           {lab.slice(0, 3).map((d) => <li><span class="pulse" aria-hidden="true"></span>{d.data.title}</li>)}
         </ul>
@@ -79,7 +79,7 @@ const latestJournal = journal[0];
     )}
 
     <!-- journal -->
-    <Card tone="starlight" span="m3 l4" label={t('home.journal')} href="/journal/" class="journalcard">
+    <Card tone="starlight" span="m3 l4" label={t('home.journal')} href="/journal/" class={`journalcard compact${lab.length ? '' : ' journalcard--tall'}`}>
       {latestJournal && (
         <>
           <time class="kicker">{fmtDate(latestJournal.data.date)}{latestJournal.data.mood && ` · ${latestJournal.data.mood}`}</time>
@@ -133,4 +133,22 @@ const latestJournal = journal[0];
 
   .journalcard h3 { font-size: var(--step-1); }
   .clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* Lab + journal share the column beside the career card: on desktop the
+     career card spans two rows and they take one each (dense flow places
+     them). With no lab yet, the journal takes both rows. Both are compact:
+     tighter padding and type scaled down about 15%. Kickers stay at
+     0.75rem and body text at 0.9rem so the text stays readable.
+     Selectors go through .home + :global(): Card's root element doesn't
+     carry this page's scope attribute, so a bare `.compact` never matches. */
+  @media (min-width: 1024px) {
+    .home :global(.career), .home :global(.journalcard--tall) { grid-row: span 2; }
+  }
+  .home :global(.compact) { padding: var(--s2); gap: 10px; }
+  .home :global(.compact .card__label) { font-size: 0.75rem; }
+  .home :global(.compact .card__arrow) { top: 12px; right: 12px; }
+  .home :global(.compact .lab__list li) { font-size: 0.95rem; }
+  .home :global(.compact time) { font-size: 0.75rem; }
+  .home :global(.journalcard.compact h3) { font-size: var(--step-0); line-height: 1.2; }
+  .home :global(.compact .clamp) { font-size: 0.9rem; line-height: 1.5; -webkit-line-clamp: 2; }
 </style>

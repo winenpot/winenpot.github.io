@@ -47,6 +47,9 @@ alternative all sit dormant behind a `FOOTER_FIGURE` flag in `Shore.astro`.
 
 ## Notes
 
+- [[Real sky]]: real constellations + Mars/Earth over the dunes, the crow
+  pointer, compact lab/journal column, trimmed footer (live 2026-10-22).
+  Eyepiece (3D planet) and sound are the open next steps.
 - [[Redesign pass]]: the 2026-10-14 redesign, now live. Its "Remaining
   before calling it finished" list (OG image, sample posts, portrait, §5
   UX pass) is the to-do list.

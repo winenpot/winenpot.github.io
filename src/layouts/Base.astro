@@ -10,6 +10,7 @@ import Nav from '../components/Nav.astro';
 import Shore from '../components/Shore.astro';
 import FloatingFigures from '../components/FloatingFigures.astro';
 import HireDialog from '../components/HireDialog.astro';
+import CrowCursor from '../components/CrowCursor.astro';
 
 interface Props { title?: string; description?: string; image?: string; locale?: Locale; type?: 'website' | 'article' }
 const { title, description = SITE.description, image = '/og.png', locale = DEFAULT_LOCALE, type = 'website' } = Astro.props;
@@ -49,6 +50,7 @@ const loc = LOCALES[locale];
     </main>
     <Shore />
     <HireDialog />
+    <CrowCursor />
   </body>
 </html>
 

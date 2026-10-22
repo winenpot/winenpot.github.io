@@ -1,9 +1,27 @@
 ---
 /**
  * The fixed backdrop: a painted symbolist sky (Higgsfield, Ciurlionis x
- * Feininger) under a living star field. Stars twinkle, link into
- * constellations near the pointer (a little graph theory), and a shooting
- * star crosses now and then, and always when the footer thinker looks up.
+ * Feininger) under the real night sky.
+ *
+ * Each visit picks one of 120 precomputed moments from src/data/sky.json
+ * (built by assets/gen/sky/build_sky.py): either a Sahara dune field
+ * looking up at Mars, or a Martian dune field / landing site looking up at
+ * Earth. The stars are the same from both, so only the planet and the
+ * caption change. The pick is kept for the session so the sky doesn't jump
+ * between pages.
+ *
+ * Stars sit where they really are (stereographic projection, the way
+ * planetariums draw: it keeps constellation shapes true), with the horizon
+ * at the bottom edge. The 88 standard figures are drawn faintly; one lights
+ * up near the pointer, or one at a time when the pointer rests, with its
+ * Latin and Persian name. The planet is a steady point (planets don't
+ * twinkle). A shooting star crosses now and then. Where and when the sky
+ * is from isn't shown (the user dropped the footer caption); each snapshot
+ * still carries place/date/local time in sky.json if that comes back.
+ *
+ * Cost: positions are computed once per resize/snapshot and painted to an
+ * offscreen canvas; each frame (30 fps) is one blit plus a few twinkling
+ * stars, the highlighted figure and any meteor.
  */
 import { Image } from 'astro:assets';
 import skyTop from '../assets/art/sky-top.png';
@@ -11,102 +29,282 @@ import skyTop from '../assets/art/sky-top.png';
 <div class="sky" aria-hidden="true">
   <Image src={skyTop} alt="" widths={[960, 1600, 2048]} sizes="100vw" loading="eager" fetchpriority="high" class="sky__paint" />
   <div class="sky__veil"></div>
-  <canvas id="stars" class="sky__stars"></canvas>
+  <canvas id="stars" class="sky__stars" data-paint-w={skyTop.width} data-paint-h={skyTop.height}></canvas>
 </div>
 
 <script>
+  import sky from '../data/sky.json';
+
+  type Vec = [number, number, number];
+  type Seg = [number, number, number, number];
+  type Fig = { name: string; fa: string; rank: number; segs: Seg[]; lx: number; ly: number };
+
   const c = document.getElementById('stars') as HTMLCanvasElement;
   const ctx = c.getContext('2d')!;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  type Star = { x: number; y: number; r: number; p: number; s: number; tw: boolean };
+  const css = getComputedStyle(document.documentElement);
+  const tok = (n: string) => css.getPropertyValue(n).trim();
+  const COL = {
+    pearl: tok('--pearl'), warm: tok('--starlight'), cool: tok('--periwinkle'),
+    line: tok('--lavender'), ink: tok('--ink'), mute: tok('--ink-mute'), night: tok('--night-0'),
+    Mars: tok('--sky-mars'), Earth: tok('--periwinkle'),
+  };
+  const FONT = { display: tok('--font-display'), body: tok('--font-body'), mono: tok('--font-mono') };
+  const DEG = Math.PI / 180;
   const frameInterval = 1000 / 30;
-  let W = 0, H = 0, dpr = 1, stars: Star[] = [];
-  // the static field is painted once to this offscreen canvas and blitted
-  // every frame — only ~1 in 9 stars (tw) are redrawn live, to twinkle.
+  const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+  const unit = (raDeg: number, decDeg: number): Vec => {
+    const ra = raDeg * DEG, dec = decDeg * DEG;
+    return [Math.cos(dec) * Math.cos(ra), Math.cos(dec) * Math.sin(ra), Math.sin(dec)];
+  };
+
+  // ── the catalogue, once ────────────────────────────────────────────────
+  const N = sky.stars.length / 4;
+  const sv = new Float64Array(N * 3), smag = new Float32Array(N), scol: string[] = [];
+  for (let i = 0; i < N; i++) {
+    const v = unit(sky.stars[i * 4] / 100, sky.stars[i * 4 + 1] / 100);
+    sv[i * 3] = v[0]; sv[i * 3 + 1] = v[1]; sv[i * 3 + 2] = v[2];
+    smag[i] = sky.stars[i * 4 + 2] / 10;
+    const bv = sky.stars[i * 4 + 3] / 100;
+    scol.push(bv < 0.05 ? COL.cool : bv > 1.1 ? COL.warm : COL.pearl);
+  }
+
+  // ── which moment: one per visit, kept across pages ─────────────────────
+  const KEY = 'sky:snap';
+  const pick = (not = -1) => { let i; do i = Math.floor(Math.random() * sky.snaps.length); while (i === not && sky.snaps.length > 1); return i; };
+  let snapIndex = (() => {
+    try { const n = Number(sessionStorage.getItem(KEY) ?? 'x'); if (Number.isInteger(n) && n >= 0 && n < sky.snaps.length) return n; } catch {}
+    return pick();
+  })();
+  const remember = () => { try { sessionStorage.setItem(KEY, String(snapIndex)); } catch {} };
+  remember();
+
+  // ── projection: stereographic around (az0, alt0), horizon on the bottom edge ──
+  let W = 0, H = 0, dpr = 1, R = 1, cx = 0, cy = 0, az0 = 0, sinA0 = 0, cosA0 = 1;
+  let M: number[] = sky.snaps[snapIndex].m;
+  function horiz(x: number, y: number, z: number): [number, number] {
+    const n = M[0] * x + M[1] * y + M[2] * z, e = M[3] * x + M[4] * y + M[5] * z, u = M[6] * x + M[7] * y + M[8] * z;
+    return [Math.asin(clamp(u, -1, 1)), Math.atan2(e, n)];
+  }
+  function project(alt: number, az: number): [number, number] | null {
+    const ca = Math.cos(alt), dz = az - az0, cdz = Math.cos(dz);
+    const cosc = sinA0 * Math.sin(alt) + cosA0 * ca * cdz;
+    if (cosc < -0.3) return null;
+    const k = (2 * R) / (1 + cosc);
+    return [cx + k * ca * Math.sin(dz), cy - k * (cosA0 * Math.sin(alt) - sinA0 * ca * cdz)];
+  }
+
+  const sx = new Float32Array(N), sy = new Float32Array(N), sr = new Float32Array(N), sa = new Float32Array(N), vis = new Uint8Array(N);
+  let tw: number[] = [], twAmp = 0.55, figs: Fig[] = [];
+  let planet = { x: -99, y: -99, r: 2, name: 'Mars' as string };
+
+  // The painting's own rule: its ringed planet (lower left of sky-top.png)
+  // throws a beam up and to the right. The real planet is set on that
+  // beam's axis, at whatever height its true altitude gives it. Numbers are
+  // in the painting's pixels; the mapping mirrors .sky__paint's
+  // object-fit: cover + object-position: 30% 30%.
+  const PAINT = { w: Number(c.dataset.paintW) || 2048, h: Number(c.dataset.paintH) || 1152, ox: 352, oy: 910, beamDeg: 28, pos: 0.3 };
+  function beamX(y: number): number | null {
+    const s = Math.max(W / PAINT.w, H / PAINT.h);
+    const px = (W - PAINT.w * s) * PAINT.pos + (PAINT.ox / 2048) * PAINT.w * s;
+    const py = (H - PAINT.h * s) * PAINT.pos + (PAINT.oy / 1152) * PAINT.h * s;
+    if (y > py - 30) return null; // below the painted planet: no beam there
+    return px + (py - y) / Math.tan(PAINT.beamDeg * DEG);
+  }
+
+  function layout() {
+    const snap = sky.snaps[snapIndex];
+    M = snap.m;
+    const aspect = W / H;
+    // wide desktop: ~115 deg across, horizon to 76 deg up; phone: ~43 deg across, up to the zenith
+    const alt0 = (aspect >= 1.4 ? 38 : aspect <= 0.6 ? 45 : 45 - ((aspect - 0.6) / 0.8) * 7) * DEG;
+    sinA0 = Math.sin(alt0); cosA0 = Math.cos(alt0);
+    R = H / (4 * Math.tan(alt0 / 2)); cx = W / 2; cy = H / 2;
+
+    // aim so the planet lands on the painted beam (else right of centre)
+    const [palt, paz] = horiz(...unit(snap.planet.ra, snap.planet.dec));
+    const aim = (target: number) => {
+      let lo = -80 * DEG, hi = 80 * DEG;
+      for (let i = 0; i < 24; i++) {
+        const d = (lo + hi) / 2; az0 = paz - d;
+        const p = project(palt, paz);
+        if (p && p[0] < target) lo = d; else hi = d;
+      }
+      az0 = paz - (lo + hi) / 2;
+      return project(palt, paz);
+    };
+    const fallback = cx + (aspect >= 1 ? 0.2 : 0.14) * W;
+    let pp = aim(fallback);
+    for (let pass = 0; pass < 3 && pp; pass++) { // y shifts a little with az0, so settle in a few passes
+      const bx = beamX(pp[1]);
+      pp = aim(bx === null ? fallback : clamp(bx, 0.12 * W, 0.86 * W));
+    }
+    planet = { x: pp ? pp[0] : -99, y: pp ? pp[1] : -99, r: clamp(2.1 + (-1 - snap.planet.mag) * 0.35, 1.9, 3.2), name: snap.planet.name };
+
+    const earth = snap.world === 'earth';
+    twAmp = earth ? 0.55 : 0.18; // Mars's thin air barely makes stars twinkle
+    tw = [];
+    for (let i = 0; i < N; i++) {
+      vis[i] = 0;
+      const [alt, az] = horiz(sv[i * 3], sv[i * 3 + 1], sv[i * 3 + 2]);
+      if (alt < -0.5 * DEG) continue;
+      const p = project(alt, az);
+      if (!p || p[0] < -12 || p[0] > W + 12 || p[1] < -12 || p[1] > H + 12) continue;
+      vis[i] = 1; sx[i] = p[0]; sy[i] = p[1];
+      const m = smag[i];
+      sr[i] = clamp(0.45 + (5.2 - m) * 0.32, 0.45, 2.5);
+      const fade = clamp((alt / DEG + 1) / (earth ? 14 : 8), 0.12, 1); // extinction near the horizon
+      sa[i] = clamp(0.3 + (5 - m) * 0.13, 0.26, 0.95) * fade;
+      if (i % 8 === 3) tw.push(i);
+    }
+
+    figs = [];
+    for (const con of sky.cons) {
+      const segs: Seg[] = [];
+      let mx = 0, my = 0, n = 0;
+      for (const line of con.lines) for (let j = 1; j < line.length; j++) {
+        const a = line[j - 1], b = line[j];
+        if (!vis[a] || !vis[b]) continue;
+        const dx = sx[b] - sx[a], dy = sy[b] - sy[a], L = Math.hypot(dx, dy);
+        const ga = sr[a] + 3.5, gb = sr[b] + 3.5; // lines stop short of their stars
+        if (L < ga + gb + 3) continue;
+        segs.push([sx[a] + (dx * ga) / L, sy[a] + (dy * ga) / L, sx[b] - (dx * gb) / L, sy[b] - (dy * gb) / L]);
+        mx += sx[a] + sx[b]; my += sy[a] + sy[b]; n += 2;
+      }
+      if (!segs.length) continue;
+      const [la, lz] = horiz(...unit(con.label[0], con.label[1]));
+      const lp = project(la, lz);
+      const onScreen = lp && lp[0] > 60 && lp[0] < W - 60 && lp[1] > 70 && lp[1] < H - 30;
+      figs.push({ name: con.name, fa: con.fa, rank: con.rank, segs, lx: onScreen ? lp[0] : mx / n, ly: onScreen ? lp[1] : my / n });
+    }
+  }
+
+  // ── the static layer ───────────────────────────────────────────────────
   const off = document.createElement('canvas');
   const octx = off.getContext('2d')!;
-  const mouse = { x: -999, y: -999 };
-  const meteors: { x: number; y: number; vx: number; vy: number; life: number }[] = [];
-
+  function strokeSegs(g: CanvasRenderingContext2D, segs: Seg[]) {
+    g.beginPath();
+    for (const s of segs) { g.moveTo(s[0], s[1]); g.lineTo(s[2], s[3]); }
+    g.stroke();
+  }
   function paintBase() {
     octx.clearRect(0, 0, W, H);
-    for (const s of stars) {
-      octx.globalAlpha = 0.62;
-      octx.fillStyle = s.r > 1.5 ? '#f4e9c8' : '#e6e2fb';
-      octx.beginPath(); octx.arc(s.x, s.y, s.r, 0, Math.PI * 2); octx.fill();
-      if (s.r > 1.5) { octx.globalAlpha = 0.15; octx.beginPath(); octx.arc(s.x, s.y, s.r * 3.2, 0, Math.PI * 2); octx.fill(); }
+    octx.strokeStyle = COL.line; octx.lineWidth = 0.7; octx.lineCap = 'round';
+    for (const f of figs) { octx.globalAlpha = f.rank === 1 ? 0.26 : f.rank === 2 ? 0.18 : 0.11; strokeSegs(octx, f.segs); }
+    for (let i = 0; i < N; i++) {
+      if (!vis[i]) continue;
+      octx.fillStyle = scol[i];
+      octx.globalAlpha = sa[i];
+      octx.beginPath(); octx.arc(sx[i], sy[i], sr[i], 0, Math.PI * 2); octx.fill();
+      if (sr[i] > 1.6) { octx.globalAlpha = sa[i] * 0.16; octx.beginPath(); octx.arc(sx[i], sy[i], sr[i] * 3.4, 0, Math.PI * 2); octx.fill(); }
     }
+    // the planet: steady, warm (Mars) or blue (Earth), with a soft glow and a quiet label
+    const pc = COL[planet.name as 'Mars' | 'Earth'] || COL.pearl;
+    const g = octx.createRadialGradient(planet.x, planet.y, 0, planet.x, planet.y, planet.r * 7);
+    g.addColorStop(0, pc); g.addColorStop(1, 'transparent');
+    octx.globalAlpha = 0.32; octx.fillStyle = g;
+    octx.beginPath(); octx.arc(planet.x, planet.y, planet.r * 7, 0, Math.PI * 2); octx.fill();
+    octx.globalAlpha = 1; octx.fillStyle = pc;
+    octx.beginPath(); octx.arc(planet.x, planet.y, planet.r, 0, Math.PI * 2); octx.fill();
+    octx.font = `400 11px ${FONT.mono}`; octx.textBaseline = 'middle'; octx.textAlign = 'left';
+    octx.globalAlpha = 0.85; octx.fillStyle = COL.mute;
+    octx.fillText(planet.name.toUpperCase().split('').join('\u200A'), planet.x + planet.r + 9, planet.y + 1);
     octx.globalAlpha = 1;
   }
+
+  // ── pointer / idle constellation highlight ─────────────────────────────
+  const mouse = { x: -999, y: -999, moved: false, at: -1e9 };
+  let active: Fig | null = null, want: Fig | null = null, h = 0, idleFig: Fig | null = null, idleAt = -1e9;
+  function segDist(px: number, py: number, s: Seg) {
+    const dx = s[2] - s[0], dy = s[3] - s[1], L2 = dx * dx + dy * dy;
+    const t = L2 ? clamp(((px - s[0]) * dx + (py - s[1]) * dy) / L2, 0, 1) : 0;
+    return Math.hypot(px - (s[0] + t * dx), py - (s[1] + t * dy));
+  }
+  function nearestFig(px: number, py: number) {
+    let best: Fig | null = null, bd = 46;
+    for (const f of figs) for (const s of f.segs) { const d = segDist(px, py, s); if (d < bd) { bd = d; best = f; } }
+    return best;
+  }
+  function drawHighlight(f: Fig, a: number) {
+    ctx.globalAlpha = 0.15 + 0.55 * a; ctx.strokeStyle = COL.line; ctx.lineWidth = 1; ctx.lineCap = 'round';
+    strokeSegs(ctx, f.segs);
+    ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.shadowColor = COL.night; ctx.shadowBlur = 10;
+    ctx.fillStyle = COL.ink; ctx.font = `italic 400 17px ${FONT.display}`;
+    ctx.fillText(f.name, f.lx, f.ly);
+    if (f.fa) { ctx.direction = 'rtl'; ctx.fillStyle = COL.mute; ctx.font = `400 13px ${FONT.body}`; ctx.fillText(f.fa, f.lx, f.ly + 18); ctx.direction = 'ltr'; }
+    ctx.shadowBlur = 0;
+  }
+
+  // ── meteors ────────────────────────────────────────────────────────────
+  const meteors: { x: number; y: number; vx: number; vy: number; life: number }[] = [];
+  function shoot() {
+    const fromLeft = Math.random() < 0.5;
+    meteors.push({ x: fromLeft ? W * (0.1 + Math.random() * 0.4) : W * (0.5 + Math.random() * 0.4), y: H * (0.04 + Math.random() * 0.25), vx: (fromLeft ? 1 : -1) * (520 + Math.random() * 260), vy: 170 + Math.random() * 120, life: 1 });
+  }
+
+  // ── frame ──────────────────────────────────────────────────────────────
+  let last = 0, lastFrame = frameInterval / 2, queued = false;
+  function frame(ms: number) {
+    queued = false;
+    if (!reduce && ms - lastFrame < frameInterval) { queue(); return; }
+    lastFrame = ms;
+    const t = ms / 1000, dt = Math.min(0.05, t - last); last = t;
+
+    // what should be lit: the figure under the pointer, else (after a rest) one at a time
+    if (mouse.moved) { mouse.moved = false; want = nearestFig(mouse.x, mouse.y); if (want) mouse.at = t; }
+    if (!reduce && t - mouse.at > 6) {
+      if (t - idleAt > 7) {
+        const pool = figs.filter((f) => f.rank === 1 && f !== idleFig && f.lx > 80 && f.lx < W - 80 && f.ly > 90);
+        idleFig = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null; idleAt = t;
+      }
+      want = t - idleAt < 4.6 ? idleFig : null;
+    }
+    if (reduce) { active = want; h = want ? 1 : 0; }
+    else if (want !== active) { h = Math.max(0, h - dt * 3); if (h === 0) active = want; }
+    else if (active) h = Math.min(1, h + dt * 2.2);
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(off, 0, 0); ctx.restore();
+    if (!reduce) for (const i of tw) {
+      const a = 1 - twAmp + twAmp * Math.sin(t * (0.6 + (i % 13) * 0.11) + i) ** 2;
+      ctx.globalAlpha = sa[i] * a * 0.9; ctx.fillStyle = scol[i];
+      ctx.beginPath(); ctx.arc(sx[i], sy[i], sr[i] * 1.05, 0, Math.PI * 2); ctx.fill();
+    }
+    if (active && h > 0) drawHighlight(active, h);
+    for (let i = meteors.length - 1; i >= 0; i--) {
+      const m = meteors[i];
+      m.x += m.vx * dt; m.y += m.vy * dt; m.life -= dt * 0.9;
+      const g = ctx.createLinearGradient(m.x, m.y, m.x - m.vx * 0.22, m.y - m.vy * 0.22);
+      g.addColorStop(0, COL.warm); g.addColorStop(1, 'transparent');
+      ctx.globalAlpha = Math.max(0, m.life) * 0.95; ctx.strokeStyle = g; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x - m.vx * 0.22, m.y - m.vy * 0.22); ctx.stroke();
+      if (m.life <= 0) meteors.splice(i, 1);
+    }
+    ctx.globalAlpha = 1;
+    if (!reduce) queue();
+  }
+  function queue() { if (!queued) { queued = true; requestAnimationFrame(frame); } }
+
   function resize() {
     dpr = Math.min(1.5, devicePixelRatio || 1);
     W = innerWidth; H = innerHeight;
     c.width = off.width = W * dpr; c.height = off.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); octx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const n = Math.round((W * H) / 7000);
-    stars = Array.from({ length: n }, (_, i) => ({
-      x: Math.random() * W, y: Math.random() * H * 0.95,
-      r: Math.random() < 0.08 ? 1.6 + Math.random() : 0.4 + Math.random() * 0.9,
-      p: Math.random() * Math.PI * 2, s: 0.4 + Math.random() * 1.4,
-      tw: i % 9 === 0,
-    }));
-    paintBase();
+    active = want = idleFig = null; h = 0;
+    layout(); paintBase(); queue();
   }
-  function shoot() {
-    const fromLeft = Math.random() < 0.5;
-    meteors.push({ x: fromLeft ? W * (0.1 + Math.random() * 0.4) : W * (0.5 + Math.random() * 0.4), y: H * (0.04 + Math.random() * 0.25), vx: (fromLeft ? 1 : -1) * (520 + Math.random() * 260), vy: 170 + Math.random() * 120, life: 1 });
-  }
-  let last = 0, lastFrame = frameInterval / 2;
-  function frame(ms: number) {
-    if (!reduce && ms - lastFrame < frameInterval) {
-      requestAnimationFrame(frame);
-      return;
-    }
-    lastFrame = ms;
-    const t = ms / 1000, dt = Math.min(0.05, t - last); last = t;
-    ctx.clearRect(0, 0, W, H);
-    // the whole static field in one blit, instead of ~200 arc()+fill() calls
-    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(off, 0, 0); ctx.restore();
-    for (const s of stars) {
-      if (!s.tw) continue;
-      const a = reduce ? 0.7 : 0.45 + 0.55 * Math.sin(t * s.s + s.p) ** 2;
-      ctx.globalAlpha = a;
-      ctx.fillStyle = s.r > 1.5 ? '#f4e9c8' : '#e6e2fb';
-      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
-    }
-    // constellations: stars near the pointer link to their two nearest neighbours
-    const near = stars.filter((s) => (s.x - mouse.x) ** 2 + (s.y - mouse.y) ** 2 < 150 ** 2);
-    ctx.strokeStyle = '#bfb0ea'; ctx.lineWidth = 0.7;
-    for (const s of near) {
-      const nb = near.filter((o) => o !== s).sort((a, b) => (a.x - s.x) ** 2 + (a.y - s.y) ** 2 - ((b.x - s.x) ** 2 + (b.y - s.y) ** 2)).slice(0, 2);
-      for (const o of nb) {
-        const d = Math.hypot(s.x - mouse.x, s.y - mouse.y);
-        ctx.globalAlpha = 0.5 * (1 - d / 150);
-        ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(o.x, o.y); ctx.stroke();
-      }
-    }
-    for (let i = meteors.length - 1; i >= 0; i--) {
-      const m = meteors[i];
-      m.x += m.vx * dt; m.y += m.vy * dt; m.life -= dt * 0.9;
-      const g = ctx.createLinearGradient(m.x, m.y, m.x - m.vx * 0.22, m.y - m.vy * 0.22);
-      g.addColorStop(0, 'rgba(244,233,200,0.95)'); g.addColorStop(1, 'rgba(244,233,200,0)');
-      ctx.globalAlpha = Math.max(0, m.life); ctx.strokeStyle = g; ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x - m.vx * 0.22, m.y - m.vy * 0.22); ctx.stroke();
-      if (m.life <= 0) meteors.splice(i, 1);
-    }
-    ctx.globalAlpha = 1;
-    if (!reduce) requestAnimationFrame(frame);
-  }
+
   resize();
+  document.fonts?.ready.then(() => { paintBase(); queue(); });
   addEventListener('resize', resize);
-  addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
-  document.addEventListener('pointerleave', () => { mouse.x = mouse.y = -999; });
+  addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.moved = true; if (reduce) queue(); }, { passive: true });
+  document.addEventListener('pointerleave', () => { mouse.x = mouse.y = -999; mouse.moved = true; if (reduce) queue(); });
   addEventListener('thinker:lookup', () => shoot());
   if (!reduce) {
     const schedule = () => setTimeout(() => { if (!document.hidden) shoot(); schedule(); }, 9000 + Math.random() * 9000);
     schedule();
   }
-  requestAnimationFrame(frame);
 </script>
 
 <style>

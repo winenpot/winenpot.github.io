@@ -55,11 +55,6 @@ const FOOTER_FIGURE = 'none' as FooterFigure;
       <cite class="kicker">Omar Khayyam · Rubáiyát, LVII (tr. FitzGerald)</cite>
     </blockquote>
 
-    <p class="shore__contact">
-      {SITE.hire.headline} <a href={`mailto:${SITE.email}?subject=${encodeURIComponent(SITE.hire.emailSubject)}`}>{SITE.email}</a>
-      <span class="muted"> · {SITE.hire.availability}</span>
-    </p>
-
     <nav class="shore__nav" aria-label="Footer">
       <a href="/">{t('nav.home')}</a>
       {NAV.map((n) => <a href={n.href}>{t(n.key)}</a>)}
@@ -130,10 +125,6 @@ const FOOTER_FIGURE = 'none' as FooterFigure;
   @media (max-width: 639px) { .shore__inner--full { padding-bottom: var(--s3); } .shore:has(.shore__inner--full) { min-height: 420px; } }
   .shore__quote p { font-style: italic; font-weight: 300; font-size: var(--step-1); line-height: 1.45; color: var(--pearl); max-width: 32ch; text-shadow: 0 2px 16px rgb(10 11 28 / 0.8); }
   .shore__quote cite { display: block; margin-top: var(--s1); font-style: normal; }
-  .shore__contact { max-width: 46ch; color: var(--ink-soft); font-size: 0.95rem; }
-  .shore__contact a { color: var(--pearl); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
-  .shore__contact a:hover, .shore__contact a:focus-visible { color: var(--starlight); }
-  .shore__contact .muted { color: var(--ink-mute); }
   .shore__nav, .shore__links { display: flex; flex-wrap: wrap; gap: 6px 20px; font-family: var(--font-mono); font-size: 0.9rem; }
   .shore__links { list-style: none; padding: 0; }
   .shore__nav a, .shore__links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); text-decoration: none; }

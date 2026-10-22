@@ -1,0 +1,195 @@
+---
+/**
+ * The pointer, on desktop: a crow. It flies after the pointer and lands on
+ * it (on a little twig) when the pointer rests. No dot, no ring: the crow
+ * itself is the pointer. Its eyes say whether you can click: pale starlight
+ * normally, glowing red over links, buttons and clickable cards. Hand-drawn
+ * SVG, no library, ~4 KB.
+ *
+ * - The click point is the real pointer position: where the crow's feet sit
+ *   once it perches. In flight it trails the pointer by a fraction of a
+ *   second (a damped spring), faces the way it flies, banks when it climbs
+ *   or dives, and flaps only while flying. When it is perched the loop
+ *   stops (no frames while idle).
+ * - Only with a fine, hovering pointer and without prefers-reduced-motion;
+ *   otherwise nothing changes and the native cursor stays.
+ * - The native cursor comes back wherever precision or typing matters:
+ *   inputs, textareas, selects, iframes, contenteditable and anything marked
+ *   data-native-cursor (the t-spanner canvas), and while a modal dialog is
+ *   open (the dialog sits in the top layer, above this).
+ * - Transforms and opacity only; nothing is written to :root/html from the
+ *   pointer handler (the html class is set once, at start).
+ */
+---
+<div class="crow" id="crow" aria-hidden="true">
+  <div class="crow__bird">
+    <svg class="crow__svg" viewBox="-26 -40 52 46" width="52" height="46">
+      <defs>
+        <linearGradient id="crow-sheen" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" class="crow__sheen-a" />
+          <stop offset="1" class="crow__sheen-b" />
+        </linearGradient>
+        <radialGradient id="crow-eye-glow">
+          <stop offset="0" class="crow__glow-a" />
+          <stop offset="1" class="crow__glow-b" />
+        </radialGradient>
+      </defs>
+
+      <!-- in flight (facing right, feet point at 0,0) -->
+      <g class="crow__fly">
+        <g transform="translate(5 -16.4)"><g class="crow__wing crow__wing--far"><path d="M3 0C2.5-5 0-12-5-18.5L-6.2-15.8-8.4-17.2-8.8-14.2-11.2-15-10.9-11.9-13.4-12.2-12.4-9.4C-10.5-6-8-2.5-6 0Z" /></g></g>
+        <path class="crow__ink" d="M13-17.2C8-19.6-3-19.4-9-16.6L-17.5-19.6Q-19.4-15.6-17.8-11.2L-9-13.6C-3-10.6 7-10.8 13-13.2Z" />
+        <circle class="crow__ink" cx="13.8" cy="-15.2" r="4.3" />
+        <path class="crow__beak" d="M17-16.9Q21.5-16.3 24.2-14.7Q21-13.7 17.4-13.3Z" />
+        <circle class="crow__eye" cx="15.6" cy="-16.4" r="0.85" />
+        <circle class="crow__eye-glow" cx="15.6" cy="-16.4" r="3.2" />
+        <circle class="crow__eye-red" cx="15.6" cy="-16.4" r="0.85" />
+        <g transform="translate(1.5 -16)"><g class="crow__wing"><path d="M3 0C2.5-5 0-12-5-18.5L-6.2-15.8-8.4-17.2-8.8-14.2-11.2-15-10.9-11.9-13.4-12.2-12.4-9.4C-10.5-6-8-2.5-6 0Z" /></g></g>
+      </g>
+
+      <!-- perched (facing right, feet on the twig at 0,0) -->
+      <g class="crow__perch">
+        <path class="crow__twig" d="M-15 0.9Q0-0.5 15 1.5M8.5 1Q10.5-1.5 12.8-3.4" />
+        <g class="crow__sitter">
+          <path class="crow__legs" d="M-0.6-4.6-1.2 0M2.6-5.6 2.1 0M-3.4 0H1M0.2 0H4.6" />
+          <path class="crow__ink" d="M4.5-25C-2.5-23.5-8-16-9.5-9L-16.5 1.5-13.6 3.6-6.5-4C-2.5-2.2 4-4 7.2-10C9-13.5 9.6-17 9-19.5Z" />
+          <path class="crow__fold" d="M5-19.5C-1-19-7-12.5-11.6-3.2L-8.4-3.6C-4.4-8.6 0.6-11.8 5.6-13.4Z" />
+          <g transform="translate(5 -19)"><g class="crow__head"><g transform="translate(-5 19)">
+            <circle class="crow__ink" cx="7.2" cy="-21.4" r="5.3" />
+            <path class="crow__beak" d="M11.6-24Q16.6-23.4 19.8-21Q15.8-19.8 11.9-18.8Z" />
+            <circle class="crow__eye" cx="9" cy="-22.6" r="0.95" />
+            <circle class="crow__eye-glow" cx="9" cy="-22.6" r="3.4" />
+            <circle class="crow__eye-red" cx="9" cy="-22.6" r="0.95" />
+          </g></g></g>
+        </g>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<script>
+  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const root = document.getElementById('crow');
+  if (fine && !reduce && root) {
+    const bird = root.querySelector<HTMLElement>('.crow__bird')!;
+    // keep in sync with the cursor rule in the <style> below
+    const NATIVE = 'input, textarea, select, iframe, [contenteditable], [data-native-cursor]';
+    const LINK = 'a[href], button, [role="button"], label, summary';
+    document.documentElement.classList.add('crow-on'); // once, at start
+
+    const K = 170, C = 2 * Math.sqrt(K) * 0.92; // spring stiffness (1/s²), damping: a little under critical
+    let tx = 0, ty = 0, x = 0, y = 0, vx = 0, vy = 0, face = 1;
+    let lastMove = 0, last = 0, raf = 0, shown = false;
+    const flags: Record<string, boolean> = {};
+    const flag = (name: string, on: boolean) => { if (flags[name] !== on) { flags[name] = on; root.classList.toggle(name, on); } };
+    const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+
+    function place() {
+      const bank = flags['is-flying'] ? clamp(vy * 0.035, -28, 28) : 0; // local frame faces +x: climbing = nose up
+      bird.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scaleX(${face}) rotate(${bank.toFixed(1)}deg)`;
+    }
+    function tick(now: number) {
+      raf = 0;
+      const dt = Math.min(0.034, (now - last) / 1000 || 0.016); last = now;
+      vx += (K * (tx - x) - C * vx) * dt; vy += (K * (ty - y) - C * vy) * dt;
+      x += vx * dt; y += vy * dt;
+      const speed = Math.hypot(vx, vy), dist = Math.hypot(tx - x, ty - y), idle = now - lastMove;
+      if (vx > 40) face = 1; else if (vx < -40) face = -1;
+      if (speed > 60 || dist > 8) { flag('is-flying', true); flag('is-perched', false); }
+      else if (idle > 140 && dist < 3) { flag('is-flying', false); flag('is-perched', true); }
+      if (dist < 0.3 && speed < 4 && idle > 140) { x = tx; y = ty; vx = vy = 0; place(); return; } // settled: stop
+      place();
+      raf = requestAnimationFrame(tick);
+    }
+    const wake = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); } };
+
+    addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'touch') return;
+      tx = e.clientX; ty = e.clientY; lastMove = performance.now();
+      if (!shown) { shown = true; x = tx; y = ty; vx = vy = 0; place(); flag('is-perched', true); }
+      flag('is-away', false);
+      const el = e.target instanceof Element ? e.target : null;
+      flag('is-native', !!el?.closest(NATIVE));
+      flag('is-link', !!el?.closest(LINK));
+      wake();
+    }, { passive: true });
+    addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') flag('is-down', true); }, { passive: true });
+    addEventListener('pointerup', () => flag('is-down', false), { passive: true });
+    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) flag('is-away', true); });
+    addEventListener('blur', () => flag('is-away', true));
+  }
+</script>
+
+<style>
+  /* the native arrow hides only while the crow runs, and never where typing,
+     precise picking or a modal dialog needs it (list mirrors NATIVE above) */
+  :global(html.crow-on:not(:has(dialog:modal)) *:not(input, textarea, select, iframe, [contenteditable], [data-native-cursor], [data-native-cursor] *)) { cursor: none !important; }
+  :global(html.crow-on:not(:has(dialog:modal))) { cursor: none; }
+
+  .crow { position: fixed; left: 0; top: 0; width: 0; height: 0; z-index: var(--z-cursor); pointer-events: none; opacity: 0; transition: opacity 160ms var(--ease-out); }
+  :global(html.crow-on) .crow { display: block; }
+  .crow { display: none; }
+  .crow.is-perched, .crow.is-flying { opacity: 1; }
+  .crow.is-away, .crow.is-native { opacity: 0; }
+  :global(html:has(dialog:modal)) .crow { opacity: 0; }
+
+  .crow__bird { position: absolute; left: 0; top: 0; will-change: transform; transform-origin: 0 0; }
+  .crow__svg {
+    position: absolute; left: -26px; top: -40px; overflow: visible; max-width: none;
+    filter: drop-shadow(0 0 0.7px var(--lavender)) drop-shadow(0 0 5px color-mix(in oklab, var(--periwinkle) 40%, transparent));
+  }
+
+  /* colours (all from tokens) */
+  .crow__ink { fill: var(--night-0); }
+  .crow__wing path { fill: url(#crow-sheen); }
+  .crow__wing--far path { fill: var(--night-0); }
+  .crow__fold { fill: url(#crow-sheen); }
+  .crow__sheen-a { stop-color: var(--night-0); }
+  .crow__sheen-b { stop-color: color-mix(in oklab, var(--violet) 38%, var(--night-0)); }
+  .crow__beak { fill: var(--night-2); }
+  .crow__eye { fill: var(--starlight); }
+  .crow__legs { fill: none; stroke: var(--ink-mute); stroke-width: 0.9; stroke-linecap: round; }
+  .crow__twig { fill: none; stroke: color-mix(in oklab, var(--starlight) 75%, transparent); stroke-width: 1.5; stroke-linecap: round; }
+
+  /* poses: cross-fade flight <-> perch, the twig grows in under the feet */
+  .crow__fly, .crow__perch { transition: opacity 120ms linear; }
+  .crow__fly { opacity: 0; }
+  .crow.is-flying .crow__fly { opacity: 1; animation: crow-bob 300ms ease-in-out infinite; }
+  .crow.is-flying .crow__perch { opacity: 0; }
+  .crow__twig { transform: scaleX(0); transition: transform 240ms var(--ease-out); }
+  .crow.is-perched .crow__twig { transform: scaleX(1); }
+
+  /* wings flap only in flight: scaleY about the shoulder takes the wing from
+     above the body, edge-on, to below it (each wing is wrapped in a group
+     translated to its shoulder, so 0 0 is the pivot) */
+  .crow.is-flying .crow__wing { animation: crow-flap 300ms ease-in-out infinite; }
+  .crow.is-flying .crow__wing--far { animation-delay: -40ms; }
+  @keyframes crow-flap { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(-0.75); } }
+  @keyframes crow-bob { 50% { transform: translateY(-1.2px); } }
+
+  /* perched: a few curious head turns, then still (no endless loop) */
+  .crow.is-perched .crow__head { animation: crow-look 4.6s ease-in-out 0.7s 3; }
+  @keyframes crow-look {
+    0%, 30%, 100% { transform: rotate(0); }
+    38%, 58% { transform: rotate(-14deg); }
+    68%, 86% { transform: rotate(7deg); }
+  }
+  /* click while perched: a quick peck forward, pivoting on the feet */
+  .crow__sitter { transition: transform 90ms var(--ease-out); }
+  .crow.is-perched.is-down .crow__sitter { transform: rotate(14deg); }
+
+  /* the eyes are the "clickable" signal: over a link, button or clickable
+     card a red eye grows over the pale one and a soft red glow comes up
+     around it. Opacity + transform only; each circle scales about itself. */
+  .crow__eye-red, .crow__eye-glow {
+    opacity: 0; transform: scale(0.5); transform-box: fill-box; transform-origin: center;
+    transition: opacity 140ms var(--ease-out), transform 220ms var(--ease-spring);
+  }
+  .crow__eye-red { fill: var(--crow-eye); }
+  .crow__eye-glow { fill: url(#crow-eye-glow); }
+  .crow__glow-a { stop-color: var(--crow-eye); stop-opacity: 0.85; }
+  .crow__glow-b { stop-color: var(--crow-eye); stop-opacity: 0; }
+  .crow.is-link .crow__eye-red { opacity: 1; transform: scale(1.4); }
+  .crow.is-link .crow__eye-glow { opacity: 1; transform: scale(1); }
+</style>

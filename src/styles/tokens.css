@@ -35,6 +35,14 @@
   --gofun: #f1e8d2;       /* foam */
   --kincha: #d9a540;      /* dark gold label */
 
+  /* real-sky planets (Sky.astro only): Mars's steady rust-apricot point.
+     Earth, seen from Mars, reuses --periwinkle. */
+  --sky-mars: #e8b08c;
+
+  /* the crow pointer (CrowCursor.astro only): its eyes turn this red over
+     anything clickable. */
+  --crow-eye: #ff4f62;
+
   /* text */
   --ink: #ecebf8;
   --ink-soft: #b9bbdf;
@@ -88,7 +96,7 @@
   --dur: 380ms;
 
   /* layers */
-  --z-sky: 0; --z-floaters: 1; --z-content: 2; --z-nav: 20; --z-dialog: 50;
+  --z-sky: 0; --z-floaters: 1; --z-content: 2; --z-nav: 20; --z-dialog: 50; --z-cursor: 60;
 }
 
 @media (min-width: 1024px) {

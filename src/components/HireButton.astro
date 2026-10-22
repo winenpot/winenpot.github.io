@@ -1,22 +1,54 @@
 ---
 /**
  * The site's single "Hire me" button. It lives in the sticky nav (top-right,
- * every page), so it is never repeated elsewhere. Calm at rest: a thin static
- * gradient rim. On hover/focus the rim turns, a starlight tide rises inside
- * and the star spins. Opens the <HireDialog> (one per page, in Base layout).
+ * every page), so it is never repeated elsewhere. A small ukiyo-e sea rolls
+ * inside it all the time: three wave layers (far swell, Prussian blue, deep
+ * indigo) drift at different speeds, each with a gofun foam line. On
+ * hover/focus the tide rises and bobs, the rim turns and the star spins.
+ * Opens the <HireDialog> (one per page, in Base layout).
+ *
+ * Seamless loop: every wave path is built here from whole periods, spans
+ * 2 x 120 units, and slides by exactly -50% (120 units, a multiple of every
+ * period), so frame 0 and the last frame are identical. The SVGs need
+ * `max-width: none`, because the global reset caps svg at 100%. That cap was
+ * the old "the waves end" bug.
  */
 import { t } from '../i18n/ui';
 interface Props { class?: string }
 const { class: cls } = Astro.props;
+
+const SPAN = 240; // two copies of the 120-unit loop
+const DEPTH = 48;
+/** Sine-like crest line: y = rest height, amp = crest height, p = period (must divide 120). */
+const crest = (y: number, amp: number, p: number) => {
+  let d = `M0 ${y} Q${p / 4} ${y - amp} ${p / 2} ${y}`;
+  for (let x = p; x <= SPAN; x += p / 2) d += ` T${x} ${y}`;
+  return d;
+};
+const layers = [
+  { name: 'far',  y: 15, amp: 6, p: 60 },
+  { name: 'mid',  y: 22, amp: 7, p: 40 },
+  { name: 'near', y: 30, amp: 6, p: 30 },
+].map((w) => {
+  const line = crest(w.y, w.amp, w.p);
+  // spray dots ride just above each crest of the nearest wave
+  const spray = w.name === 'near'
+    ? Array.from({ length: SPAN / w.p }, (_, i) => ({ x: i * w.p + w.p / 4, y: w.y - w.amp - 2.5 }))
+    : [];
+  return { ...w, fill: `${line} V${DEPTH} H0Z`, line, spray };
+});
 ---
 <button type="button" class:list={['hire', cls]} data-hire-open aria-haspopup="dialog">
   <span class="hire__rim" aria-hidden="true"></span>
   <span class="hire__body" aria-hidden="true">
     <span class="hire__tide">
-      <svg class="hire__wave" viewBox="0 0 240 40" preserveAspectRatio="none">
-        <path d="M0 20 Q15 8 30 20 T60 20 T90 20 T120 20 T150 20 T180 20 T210 20 T240 20 V40 H0Z" />
-        <path d="M0 22 Q15 32 30 22 T60 22 T90 22 T120 22 T150 22 T180 22 T210 22 T240 22 V40 H0Z" />
-      </svg>
+      {layers.map((w) => (
+        <svg class={`hire__wave hire__wave--${w.name}`} viewBox={`0 0 ${SPAN} ${DEPTH}`} preserveAspectRatio="none">
+          <path class="hire__sea" d={w.fill} />
+          <path class="hire__foam" d={w.line} />
+          {w.spray.map((s) => <circle class="hire__spray" cx={s.x} cy={s.y} r="1.1" />)}
+        </svg>
+      ))}
     </span>
   </span>
   <span class="hire__label">
@@ -37,11 +69,16 @@ const { class: cls } = Astro.props;
       border: 0;
       border-radius: 999px;
       background: none;
-      color: var(--pearl);
+      color: var(--kincha);
       font-family: var(--font-mono);
-      font-weight: 500;
+      font-weight: 700;
       font-size: 0.86rem;
       letter-spacing: 0.04em;
+      /* dark halo so the gold reads over both the night sky and the foam */
+      text-shadow:
+        0 1px 0 var(--night-0),
+        0 0 2px var(--night-0),
+        0 0 8px color-mix(in oklab, var(--night-0) 80%, transparent);
       transition: color 300ms, transform 300ms var(--ease-spring);
     }
     /* thin gradient rim: static at rest, turns only while hovered/focused */
@@ -57,19 +94,55 @@ const { class: cls } = Astro.props;
       position: absolute; inset: 1.5px; border-radius: inherit; z-index: -1; overflow: hidden;
       background: radial-gradient(120% 140% at 30% 0%, var(--night-3), var(--night-1));
     }
-    /* the tide rises (Y) on hover; the wave inside drifts (X) only while risen.
-       Both are transforms, so no layout work (the old version animated `left`). */
-    .hire__tide { position: absolute; inset: 0; transform: translateY(101%); transition: transform 600ms var(--ease-out); }
-    .hire__wave { position: absolute; left: 0; bottom: 0; width: 200%; height: 100%; }
-    .hire__wave path:first-child { fill: color-mix(in oklab, var(--periwinkle) 55%, transparent); }
-    .hire__wave path:last-child { fill: color-mix(in oklab, var(--starlight) 70%, var(--lavender)); }
-    .hire:hover .hire__tide, .hire:focus-visible .hire__tide { transform: translateY(4%); }
-    .hire:hover .hire__wave, .hire:focus-visible .hire__wave { animation: hire-wave 3.2s linear infinite; }
-    @keyframes hire-wave { to { transform: translateX(-50%); } }
-    .hire:hover, .hire:focus-visible { color: var(--night-0); }
+    /* The sea. At rest it fills the lower part and keeps rolling. Hover raises
+       the tide (Y) and bobs it. The waves only ever drift in X. All motion is
+       transforms on small promoted layers, so nothing repaints per frame. */
+    .hire__tide {
+      position: absolute; inset: 0;
+      transform: translateY(34%);
+      transition: transform 700ms var(--ease-out);
+    }
+    .hire__wave {
+      position: absolute; left: 0; bottom: 0;
+      width: 200%; max-width: none; height: 100%;
+      will-change: transform;
+      animation: hire-drift var(--drift, 6s) linear infinite;
+    }
+    .hire__wave--far  { --drift: 9s; animation-direction: reverse; }
+    .hire__wave--mid  { --drift: 6.5s; }
+    .hire__wave--near { --drift: 4.2s; }
+    @keyframes hire-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    .hire__wave--far  .hire__sea { fill: color-mix(in oklab, var(--asagi) 70%, transparent); }
+    .hire__wave--mid  .hire__sea { fill: var(--bero-ai); }
+    .hire__wave--near .hire__sea { fill: var(--kon); }
+    .hire__foam {
+      fill: none; stroke: var(--gofun); stroke-width: 1.4;
+      stroke-linecap: round; vector-effect: non-scaling-stroke;
+    }
+    .hire__wave--far .hire__foam { opacity: 0.45; }
+    .hire__wave--mid .hire__foam { opacity: 0.75; }
+    .hire__spray { fill: var(--gofun); opacity: 0.85; }
+
+    .hire:hover .hire__tide, .hire:focus-visible .hire__tide {
+      transform: translateY(10%);
+      animation: hire-bob 2.4s ease-in-out 700ms infinite alternate;
+    }
+    @keyframes hire-bob { from { transform: translateY(10%); } to { transform: translateY(18%); } }
+
+    .hire:hover, .hire:focus-visible { color: color-mix(in oklab, var(--kincha) 80%, var(--starlight)); }
     .hire:active { transform: scale(0.96); }
     .hire__label { position: relative; display: inline-flex; align-items: center; gap: 10px; }
-    .hire__star { width: 14px; height: 14px; fill: currentColor; transition: transform 700ms var(--ease-spring); }
+    .hire__star {
+      width: 14px; height: 14px; fill: currentColor;
+      filter: drop-shadow(0 0 2px var(--night-0));
+      transition: transform 700ms var(--ease-spring);
+    }
     .hire:hover .hire__star, .hire:focus-visible .hire__star { transform: rotate(180deg) scale(1.2); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hire__wave, .hire:hover .hire__tide, .hire:focus-visible .hire__tide,
+      .hire:hover .hire__rim, .hire:focus-visible .hire__rim { animation: none; }
+    }
   }
 </style>

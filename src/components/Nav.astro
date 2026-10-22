@@ -17,7 +17,7 @@ const active = (href: string) => path === href || path.startsWith(href);
     <nav class="nav__links" aria-label="Main">
       {NAV.map((n) => (
         <a href={n.href} class:list={{ 'is-active': active(n.href) }} aria-current={active(n.href) ? 'page' : undefined}>
-          <span class:list={{ 'wave-underline': active(n.href) }}>{t(n.key)}</span>
+          <span class="nav__word">{t(n.key)}<span class="nav__ink" aria-hidden="true"><span class="nav__pen"><span class="nav__line"><span class="nav__wave"></span></span></span></span></span>
         </a>
       ))}
     </nav>
@@ -51,5 +51,34 @@ const active = (href: string) => path === href || path.startsWith(href);
   }
   .nav__links a:hover { color: var(--pearl); background: color-mix(in oklab, var(--lavender) 12%, transparent); }
   .nav__links a.is-active { color: var(--starlight); }
+
+  /* Pencil wave under each link (same sine as .wave-underline). The active
+     page keeps it drawn. On pointer devices, hover draws it in from the left,
+     then it ripples. Draw-in uses transforms only: the clipping window
+     (.nav__pen) slides in while the line (.nav__line) slides back by the same
+     amount, so the line stays still on screen and gets uncovered like a
+     pencil stroke. Same duration and easing on both, or the line would drift. */
+  .nav__word { position: relative; display: inline-block; }
+  .nav__ink { position: absolute; left: 0; right: 0; bottom: -0.32em; height: 0.36em; overflow: hidden; pointer-events: none; }
+  .nav__pen, .nav__line { position: absolute; inset: 0; transition: transform 560ms var(--ease-out); }
+  .nav__pen { overflow: hidden; transform: translateX(-101%); }
+  .nav__line { transform: translateX(101%); }
+  .nav__wave {
+    position: absolute; top: 0; bottom: 0; left: 0; width: calc(100% + 40px); /* +1 period for the ripple loop */
+    background: currentColor; opacity: 0.7;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8' preserveAspectRatio='none'%3E%3Cpath d='M0 4 Q5 0 10 4 T20 4 T30 4 T40 4' fill='none' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") 0 50% / 40px 100% repeat-x;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8' preserveAspectRatio='none'%3E%3Cpath d='M0 4 Q5 0 10 4 T20 4 T30 4 T40 4' fill='none' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") 0 50% / 40px 100% repeat-x;
+  }
+  .is-active .nav__pen, .is-active .nav__line,
+  .nav__links a:focus-visible .nav__pen, .nav__links a:focus-visible .nav__line { transform: none; }
+  @media (hover: hover) and (pointer: fine) {
+    .nav__links a:hover .nav__pen, .nav__links a:hover .nav__line { transform: none; }
+    .nav__links a:hover .nav__wave { animation: nav-ripple 1.4s linear infinite; }
+  }
+  @keyframes nav-ripple { to { transform: translateX(-40px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .nav__pen, .nav__line { transition: none; }
+    .nav__links a:hover .nav__wave { animation: none; }
+  }
   :global(.nav__hire) { grid-area: hire; justify-self: end; }
 </style>

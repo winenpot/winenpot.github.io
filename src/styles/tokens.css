@@ -27,6 +27,14 @@
   --pearl: #efeaf7;
   --starlight: #f4e9c8;   /* the only warm note — stars, LCD digits, sparks */
 
+  /* ukiyo-e accents: only the Hire button's sea (Hokusai's Prussian blue,
+     shell-white gofun foam) and its dark-gold kincha label */
+  --kon: #182850;         /* deep indigo, the nearest wave */
+  --bero-ai: #24497c;     /* Prussian blue */
+  --asagi: #5d8bab;       /* pale indigo, the far swell */
+  --gofun: #f1e8d2;       /* foam */
+  --kincha: #d9a540;      /* dark gold label */
+
   /* text */
   --ink: #ecebf8;
   --ink-soft: #b9bbdf;

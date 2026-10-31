@@ -1,0 +1,14 @@
+# summary: the short stack on /about.  full: the résumé's tool list.
+summary:
+  - { group: Languages, items: [Python, Rust, TypeScript] }
+  - { group: ML & LLMs, items: [PyTorch, transformers, scikit-learn, LangChain, Ray, ONNX, MLflow] }
+  - { group: Systems, items: [FastAPI, Django, React, Docker, Kubernetes, Prefect, Celery] }
+  - { group: Data, items: [PostgreSQL, Redis, Elasticsearch, Neo4j, Qdrant, Polars, Superset] }
+full:
+  - { group: Languages, items: [Python, Rust, TypeScript] }
+  - { group: ML / data, items: [PyTorch, transformers, scikit-learn, Keras, fastai, LangChain, OpenAI Agents, Ray, MLflow, DVC, ONNX, spaCy, Polars, pandas, Modin, SciPy] }
+  - { group: Visualization, items: [Plotly, D3.js, Superset, Streamlit, Folium, Lightweight Charts] }
+  - { group: Web, items: [FastAPI, Django, DRF, Jinja, React, Next.js, HTML/CSS] }
+  - { group: Infra, items: [Docker, Kubernetes, Kubeflow, Helm, Seldon, Prefect, Celery, RabbitMQ, nginx, GitHub Actions, ELK, Linux] }
+  - { group: Databases, items: [PostgreSQL, MongoDB, Elasticsearch, Redis, Hive, Oracle, Cassandra, InfluxDB, Neo4j, FAISS, Qdrant, ChromaDB] }
+  - { group: Scraping, items: [BeautifulSoup, Selenium, Scrapy] }

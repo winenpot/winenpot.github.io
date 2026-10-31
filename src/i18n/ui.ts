@@ -34,6 +34,8 @@ export const ui = {
     'lab.waking': 'Waking the server…',
     'lab.open': 'Open in new tab',
     'lab.send': 'Send request',
+    'lab.back': 'All demos',    'lab.code': 'Code',
+    'lab.template': 'An empty slot on the workbench. This tile is a template: copy its Markdown file in src/content/lab/, give it a kind, and a real demo lands here.',
     'tspanner.hint': 'Click empty space to add a point · click a point to remove it',
     'tspanner.clear': 'Clear',
     'tspanner.mst': 'Show MST',

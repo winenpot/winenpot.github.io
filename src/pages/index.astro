@@ -6,9 +6,10 @@ import PhotoFrame from '../components/PhotoFrame.astro';
 import Timeline from '../components/Timeline.astro';
 import { SITE } from '../config/site';
 import { t } from '../i18n/ui';
-import { getWriting, getJournal, getWork, getLab, fmtDate } from '../lib/content';
+import { getWriting, getJournal, getWork, getLab, getProfile, isTemplate, fmtDate } from '../lib/content';
 
-const [writing, journal, work, lab] = await Promise.all([getWriting(), getJournal(), getWork(), getLab()]);
+const [writing, journal, work, allLab, now] = await Promise.all([getWriting(), getJournal(), getWork(), getLab(), getProfile('now')]);
+const lab = allLab.filter((d) => !isTemplate(d)); // real demos only, no empty template slots
 const years = new Date().getFullYear() - SITE.sinceYear;
 const latestJournal = journal[0];
 ---
@@ -59,7 +60,7 @@ const latestJournal = journal[0];
     <!-- now -->
     <Card tone="mauve" span="m6 l3" label={t('home.now')} class="now">
       <ul class="now__list">
-        {SITE.now.map((n) => <li>{n}</li>)}
+        {now.data.items.map((n) => <li>{n}</li>)}
       </ul>
     </Card>
 

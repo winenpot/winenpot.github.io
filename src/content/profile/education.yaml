@@ -1,0 +1,13 @@
+# Degrees, newest first. `courses` shows on /about (by grade) and on the résumé.
+items:
+  - degree: BSc Applied Mathematics
+    school: Amirkabir University of Technology
+    start: 2012
+    end: 2017
+    courses:
+      - { name: Theory of Computation, grade: 20/20 }
+      - { name: Algorithm Design, grade: 19.4/20 }
+      - { name: Partial Differential Equations, grade: 18.7/20 }
+      - { name: Numerical Linear Algebra, grade: 18.5/20 }
+      - { name: Statistics & Probability, grade: 18.4/20 }
+      - { name: Graph Theory, grade: 17.5/20 }

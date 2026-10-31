@@ -27,7 +27,14 @@ jobs:
           node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # A bad file (e.g. a CMS save from /admin) fails here, before deploy,
+      # so the live site stays on the last good version.
+      - run: pnpm run check
+      - run: pnpm run check:cms
       - run: pnpm build
+        env:
+          # repo variable (not a secret): the demo proxy URL, see .env.example
+          PUBLIC_DEMO_PROXY_URL: ${{ vars.PUBLIC_DEMO_PROXY_URL }}
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist

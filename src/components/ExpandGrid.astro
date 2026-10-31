@@ -1,0 +1,206 @@
+---
+/**
+ * A grid of <ExpandTile>s where one tile at a time opens in place: it grows
+ * across the whole grid and every other tile shrinks and is pushed away
+ * from it, out of view (nearest first); closing reverses it. Used by /lab
+ * and /work. One grid per page.
+ *
+ * The motion is a same-document View Transition: the browser snapshots
+ * every tile before and after the DOM change and animates the snapshots
+ * (FLIP, done by the compositor), so the page itself never animates layout.
+ * State is in the URL hash (#tile-id): the back button closes, a link can
+ * open a tile directly, Esc closes too. No View Transitions support, or
+ * prefers-reduced-motion: an instant swap.
+ */
+---
+<div class="xgrid" data-expand-grid>
+  <slot />
+</div>
+
+<script>
+  const grid = document.querySelector<HTMLElement>('[data-expand-grid]');
+  if (grid) {
+    const tiles = [...grid.querySelectorAll<HTMLElement>(':scope > .xtile')];
+    const root = document.documentElement;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+    const DUR = 560;
+    let open: HTMLElement | null = null;
+    let busy: ViewTransition | null = null;
+
+    const byId = (id: string) => tiles.find((x) => x.id === id) ?? null;
+    const fromHash = () => byId(decodeURIComponent(location.hash.slice(1)));
+    const navBottom = () => document.querySelector('.nav')?.getBoundingClientRect().bottom ?? 0;
+    const center = (r: DOMRect) => [r.left + r.width / 2, r.top + r.height / 2];
+
+    /** The DOM change itself, no motion. */
+    function setState(next: HTMLElement | null) {
+      // the room the tiles had is the least the opened one gets
+      if (next && !open) grid!.style.setProperty('--room', `${grid!.offsetHeight}px`);
+      for (const tile of tiles) {
+        const on = tile === next;
+        tile.toggleAttribute('data-open', on);
+        tile.querySelector<HTMLElement>('.xtile__panel')!.hidden = !on;
+        tile.querySelector('[data-xt-open]')!.setAttribute('aria-expanded', String(on));
+      }
+      grid!.toggleAttribute('data-open', !!next);
+      const prev = open;
+      open = next;
+      // lets a page start work only once a tile is open (lab: load the demo's code)
+      next?.dispatchEvent(new CustomEvent('xtile:open', { bubbles: true }));
+      // keep the focal thing in view: the workspace's top on open, the
+      // tile you came from on close
+      const target = next ? grid : prev;
+      if (!target) return;
+      const top = target.getBoundingClientRect().top, min = navBottom() + 16;
+      if (top < min || (!next && top > innerHeight - 160)) scrollBy(0, top - min);
+    }
+
+    function go(next: HTMLElement | null, focus = true) {
+      if (next === open) return;
+      busy?.skipTransition();
+      const prev = open;
+      const focal = (next ?? prev)!;
+      const settle = () => {
+        if (!focus) return;
+        const el = next ? next.querySelector<HTMLElement>('.xtile__title') : prev!.querySelector<HTMLElement>('[data-xt-open]');
+        el?.focus({ preventScroll: true });
+      };
+      // switching straight from one open tile to another (history) is a plain swap
+      if (!document.startViewTransition || reduce.matches || (prev && next)) { setState(next); settle(); return; }
+
+      const opening = !!next;
+      const others = tiles.filter((x) => x !== focal);
+      // opening: the others are on screen now, measure them before they go.
+      // closing: they only exist after the change, measured once it's applied.
+      const before = new Map(opening ? others.map((x) => [x, x.getBoundingClientRect()]) : []);
+      const focalBefore = focal.getBoundingClientRect();
+
+      // Only the focal tile and tiles on or near the screen get a snapshot
+      // (a view-transition-name); far-off ones just hide/appear. With many
+      // tiles, snapshotting all of them would stutter.
+      const nearRect = (r: DOMRect) => r.bottom > -innerHeight * 0.5 && r.top < innerHeight * 1.5;
+      const near = (x: HTMLElement, r: DOMRect) => !x.hidden && nearRect(r); // filtered-out tiles never animate
+      const named = new Set<HTMLElement>();
+      const name = (x: HTMLElement) => {
+        x.style.setProperty('view-transition-name', `xt-${x.id}`);
+        x.style.setProperty('view-transition-class', x === focal ? 'xtile xt-focal' : 'xtile');
+        named.add(x);
+      };
+      name(focal);
+      if (opening) others.filter((x) => near(x, before.get(x)!)).forEach(name);
+      root.classList.add('xt-vt');
+      const vt = (busy = document.startViewTransition(() => {
+        setState(next);
+        // closing: names set here still count, the new snapshot is taken after
+        if (!opening) others.filter((x) => near(x, x.getBoundingClientRect())).forEach(name);
+      }));
+
+      vt.ready.then(() => {
+        const [fx, fy] = center(opening ? focalBefore : focal.getBoundingClientRect());
+        const placed = others.filter((x) => named.has(x)).map((x) => {
+          const [cx, cy] = center(opening ? before.get(x)! : x.getBoundingClientRect());
+          return { x, dx: cx - fx, dy: cy - fy, d: Math.hypot(cx - fx, cy - fy) || 1 };
+        });
+        const far = Math.max(1, ...placed.map((p) => p.d));
+        const push = Math.max(innerWidth, innerHeight) * 0.3;
+        for (const { x, dx, dy, d } of placed) {
+          const away = { transform: `translate(${(dx / d) * push}px, ${(dy / d) * push}px) scale(0.18)`, opacity: 0 };
+          const home = { transform: 'none', opacity: 1 };
+          // fade faster than they shrink, so the moving tile never ghosts over them
+          const dim = { opacity: 0.25, offset: opening ? 0.3 : 0.7 };
+          root.animate(opening ? [home, dim, away] : [away, dim, home], {
+            duration: DUR * 0.65,
+            delay: (d / far) * DUR * 0.15,
+            easing: opening ? 'cubic-bezier(.4, 0, .7, .6)' : 'cubic-bezier(.2, .8, .2, 1)',
+            fill: 'both',
+            pseudoElement: `::view-transition-${opening ? 'old' : 'new'}(xt-${x.id})`,
+          });
+        }
+      }).catch(() => { /* transition skipped: the state is applied anyway */ });
+
+      vt.finished.finally(() => {
+        root.classList.remove('xt-vt');
+        for (const x of named) {
+          x.style.removeProperty('view-transition-name');
+          x.style.removeProperty('view-transition-class');
+        }
+        if (busy === vt) busy = null;
+        settle();
+      });
+    }
+
+    function close() {
+      if (!open) return;
+      if (history.state?.xt) history.back(); // popstate does the closing
+      else { history.replaceState(null, '', location.pathname + location.search); go(null); }
+    }
+
+    for (const tile of tiles) {
+      tile.querySelector('[data-xt-open]')!.addEventListener('click', () => {
+        if (open || busy) return;
+        history.pushState({ xt: tile.id }, '', `#${tile.id}`);
+        go(tile);
+      });
+      tile.querySelector('[data-xt-close]')!.addEventListener('click', close);
+    }
+    addEventListener('popstate', () => go(fromHash()));
+    // a tag filter is about to hide tiles: close the open one, no animation
+    document.addEventListener('tagfilter:change', () => {
+      busy?.skipTransition();
+      if (!open) return;
+      history.replaceState(null, '', location.pathname + location.search);
+      setState(null);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && open && !document.querySelector('dialog[open]')) close();
+    });
+
+    const initial = fromHash();
+    if (initial) setState(initial);
+  }
+</script>
+
+<style>
+  .xgrid {
+    display: grid; gap: var(--gap);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16.5rem), 1fr));
+    grid-auto-flow: dense; /* wide tiles never leave holes */
+  }
+  .xgrid[data-open] > :global(.xtile:not([data-open])) { display: none; }
+  .xgrid > :global(.xtile[data-open]) {
+    grid-column: 1 / -1;
+    min-height: min(var(--room, 0px), 100svh - 7rem);
+  }
+</style>
+
+<style is:global>
+  /* Only the tiles morph. The root keeps no snapshot, so the sky, nav and
+     footer stay live underneath; the crow pointer (top layer, which the
+     transition overlay would cover) is carried along as its own snapshot. */
+  html.xt-vt { view-transition-name: none; }
+  html.xt-vt .crow { view-transition-name: xt-crow; }
+
+  ::view-transition-group(*.xtile) {
+    animation-duration: 560ms;
+    animation-timing-function: var(--ease-out);
+  }
+  /* the tile that opens or closes rides above the ones leaving */
+  ::view-transition-group(*.xt-focal) { z-index: 1; }
+  /* No stretching: both snapshots keep their real size, pinned top-left,
+     clipped to the card's radius, so text never scales or blurs. The
+     small face fades out early, the open workspace fades in over it. */
+  ::view-transition-old(*.xtile),
+  ::view-transition-new(*.xtile) {
+    width: 100%; height: 100%;
+    object-fit: none; object-position: left top;
+    border-radius: var(--radius);
+    mix-blend-mode: normal;
+  }
+  ::view-transition-old(*.xtile) { animation: xt-out 240ms var(--ease-out) both; }
+  ::view-transition-new(*.xtile) { animation: xt-in 360ms var(--ease-out) 100ms both; }
+  /* tiles with only one snapshot are leaving or arriving: the script animates them */
+  ::view-transition-old(*.xtile):only-child,
+  ::view-transition-new(*.xtile):only-child { animation: none; }
+  @keyframes xt-out { to { opacity: 0; } }
+  @keyframes xt-in { from { opacity: 0; } }
+</style>

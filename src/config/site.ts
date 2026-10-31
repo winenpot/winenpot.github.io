@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────
-//  SITE KNOBS — the one file to edit for identity, links, photo, hire-me
-//  copy and the "now" list. Components read from here; never hard-code
-//  these values elsewhere. See AGENTS.md for the full knob map.
+//  SITE KNOBS — one-time settings: identity, links, photo, hire-me and
+//  résumé copy. Components read from here; never hard-code these values
+//  elsewhere. See AGENTS.md for the full knob map.
 // ─────────────────────────────────────────────────────────────────────
 
 export const SITE = {
@@ -57,19 +57,14 @@ export const SITE = {
     { label: 'RSS', href: '/rss.xml', icon: 'rss' },
   ],
 
-  /** "Now" card on the home page — what you are up to lately. */
-  now: [
-    'Building a calm study system: Anki + Notion + small local LLMs',
-    'Learning Rust, one borrow-checker argument at a time',
-    'Reading on cognitive science and the geometry of thought',
-  ],
-
-  stack: {
-    Languages: ['Python', 'Rust', 'TypeScript'],
-    'ML & LLMs': ['PyTorch', 'transformers', 'scikit-learn', 'LangChain', 'Ray', 'ONNX', 'MLflow'],
-    Systems: ['FastAPI', 'Django', 'React', 'Docker', 'Kubernetes', 'Prefect', 'Celery'],
-    Data: ['PostgreSQL', 'Redis', 'Elasticsearch', 'Neo4j', 'Qdrant', 'Polars', 'Superset'],
+  /** Résumé header: the line under your name, and the one-line summary. */
+  resume: {
+    headline: 'Machine Learning Engineer · Web Developer',
+    summary: 'I enjoy translating business problems into data-driven software solutions using math <3',
   },
+
+  // Lists you add to over time (now, education, certificates, skills,
+  // publications, interests, quotes) live in src/content/: see its README.
 } as const;
 
 /** Top navigation. `key` is an i18n key in src/i18n/ui.ts. */

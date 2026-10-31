@@ -1,0 +1,34 @@
+---
+/**
+ * `component: Blank`: an empty workbench slot. Lets a tile exist on /lab
+ * before its demo does (and shows how a tile looks when opened). Static:
+ * no script, no animation.
+ */
+import type { CollectionEntry } from 'astro:content';
+import { t } from '../../i18n/ui';
+interface Props { demo: CollectionEntry<'lab'> }
+const { demo } = Astro.props;
+---
+<div class="blank">
+  <div class="blank__stage" aria-hidden="true">
+    <span class="blank__slot kicker">src/content/lab/{demo.id}.md</span>
+  </div>
+  <p class="blank__note muted">{t('lab.template')}</p>
+</div>
+
+<style>
+  .blank { display: grid; gap: var(--s2); }
+  .blank__stage {
+    display: grid; place-items: center;
+    aspect-ratio: 1000 / 540;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--line-strong);
+    background:
+      radial-gradient(60% 70% at 50% 50%, color-mix(in oklab, var(--tone) 12%, transparent), transparent 70%),
+      repeating-linear-gradient(0deg, transparent 0 31px, var(--line-dim) 31px 32px),
+      repeating-linear-gradient(90deg, transparent 0 31px, var(--line-dim) 31px 32px),
+      var(--night-1);
+  }
+  .blank__slot { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--night-0); }
+  .blank__note { font-size: 0.9rem; max-width: 68ch; }
+</style>

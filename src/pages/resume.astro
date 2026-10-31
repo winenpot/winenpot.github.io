@@ -2,15 +2,20 @@
 /** HTML résumé. "Save as PDF" uses the browser's print dialog (print CSS below). Phone number intentionally omitted. */
 import Base from '../layouts/Base.astro';
 import { SITE } from '../config/site';
-import { getWork, fmtMonth } from '../lib/content';
+import { getWork, getProfile, fmtMonth, certLine } from '../lib/content';
+// Experience comes from src/content/work/, the rest from src/content/profile/.
 const work = await getWork();
+const education = await getProfile('education');
+const skills = await getProfile('skills');
+const certificates = await getProfile('certificates');
+const publications = await getProfile('publications');
 ---
 <Base title="Résumé" description={`Résumé of ${SITE.name}.`}>
   <article class="cv">
     <header class="cv__head">
       <div>
         <h1>{SITE.name}</h1>
-        <p class="kicker">Machine Learning Engineer · Web Developer · {SITE.location}</p>
+        <p class="kicker">{SITE.resume.headline} · {SITE.location}</p>
       </div>
       <button type="button" class="btn-ghost no-print" onclick="window.print()">Save as PDF ↓</button>
     </header>
@@ -18,7 +23,7 @@ const work = await getWork();
       <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
       {SITE.links.filter((l) => !['mail', 'rss'].includes(l.icon)).map((l) => <a href={l.href}>{l.href.replace(/^https?:\/\/(www\.)?/, '')}</a>)}
     </p>
-    <p class="cv__about">I enjoy translating business problems into data-driven software solutions using math &lt;3</p>
+    <p class="cv__about">{SITE.resume.summary}</p>
 
     <h2>Experience</h2>
     {work.map((w) => (
@@ -28,26 +33,38 @@ const work = await getWork();
       </section>
     ))}
 
-    <h2>Education</h2>
-    <div class="cv__row"><h3>BSc Applied Mathematics · Amirkabir University of Technology</h3><span class="kicker">2012 – 2017</span></div>
-    <p>Theory of Computation (20/20), Algorithm Design (19.4), PDEs (18.7), Numerical Linear Algebra (18.5), Statistics & Probability (18.4), Graph Theory (17.5).</p>
+    {education.data.items.length > 0 && <h2>Education</h2>}
+    {education.data.items.map((e) => (
+      <section class="cv__job">
+        <div class="cv__row"><h3>{e.degree} · {e.school}</h3><span class="kicker">{e.start} – {e.end ?? 'now'}</span></div>
+        {e.courses.length > 0 && <p>{e.courses.map((c) => `${c.name} (${c.grade})`).join(', ')}.</p>}
+      </section>
+    ))}
 
-    <h2>Tools</h2>
-    <dl class="cv__tools">
-      <dt>Languages</dt><dd>Python, Rust, TypeScript</dd>
-      <dt>ML / data</dt><dd>PyTorch, transformers, scikit-learn, Keras, fastai, LangChain, OpenAI Agents, Ray, MLflow, DVC, ONNX, spaCy, Polars, pandas, Modin, SciPy</dd>
-      <dt>Visualization</dt><dd>Plotly, D3.js, Superset, Streamlit, Folium, Lightweight Charts</dd>
-      <dt>Web</dt><dd>FastAPI, Django, DRF, Jinja, React, Next.js, HTML/CSS</dd>
-      <dt>Infra</dt><dd>Docker, Kubernetes, Kubeflow, Helm, Seldon, Prefect, Celery, RabbitMQ, nginx, GitHub Actions, ELK, Linux</dd>
-      <dt>Databases</dt><dd>PostgreSQL, MongoDB, Elasticsearch, Redis, Hive, Oracle, Cassandra, InfluxDB, Neo4j, FAISS, Qdrant, ChromaDB</dd>
-      <dt>Scraping</dt><dd>BeautifulSoup, Selenium, Scrapy</dd>
-    </dl>
+    {skills.data.full.length > 0 && (
+      <>
+        <h2>Tools</h2>
+        <dl class="cv__tools">
+          {skills.data.full.map(({ group, items }) => <><dt>{group}</dt><dd>{items.join(', ')}</dd></>)}
+        </dl>
+      </>
+    )}
 
-    <h2>Certificates</h2>
-    <p>MLOps Specialization, Deep Learning Specialization and Generative AI Software Development (DeepLearning.AI) · Machine Learning (Stanford) · IBM Data Science · Google Advanced Data Analytics · Applied Data Science I & II with honors (WorldQuant University) · Automate the Boring Stuff with Python · MCTS.</p>
+    {certificates.data.items.length > 0 && (
+      <>
+        <h2>Certificates</h2>
+        <p>{certificates.data.items.map(certLine).join(' · ')}.</p>
+      </>
+    )}
 
-    <h2>Translation</h2>
-    <p>Persian translation of <em>Mindfulness for Teens with ADHD</em>, requested by Dr. Mandegar Nikoo.</p>
+    {publications.data.items.length > 0 && (
+      <>
+        <h2>Publications</h2>
+        {publications.data.items.map((p) => (
+          <p>{p.kind} of {p.url ? <a href={p.url}><em>{p.title}</em></a> : <em>{p.title}</em>}{p.note && `, ${p.note}`}.</p>
+        ))}
+      </>
+    )}
   </article>
 </Base>
 

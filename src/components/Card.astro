@@ -9,6 +9,7 @@
  *  - href   : makes the whole card a link and adds the arrow chip
  *  - span   : CSS grid shorthand for the bento, e.g. "s6 m6 l4" (see .s*, .m*, .l*)
  *  - label  : small mono kicker at the top
+ *  - data-*  : passed through to the root element (e.g. data-tags)
  */
 interface Props {
   tone?: 'lavender' | 'periwinkle' | 'violet' | 'mauve' | 'starlight' | 'cobalt';
@@ -18,12 +19,13 @@ interface Props {
   class?: string;
   rows?: number;
   id?: string;
+  [data: `data-${string}`]: string | undefined;
 }
-const { tone = 'lavender', href, span = '', label, class: cls = '', rows, id } = Astro.props;
+const { tone = 'lavender', href, span = '', label, class: cls = '', rows, id, ...data } = Astro.props;
 const Tag = href ? 'a' : 'section';
 const style = `--tone: var(--tone-${tone});${rows ? `grid-row: span ${rows};` : ''}`;
 ---
-<Tag class:list={['card', href ? 'card--link' : 'card--static', span, cls]} href={href} style={style} id={id}>
+<Tag class:list={['card', href ? 'card--link' : 'card--static', span, cls]} href={href} style={style} id={id} {...data}>
   {label && <p class="card__label kicker"><span class="dot" aria-hidden="true"></span>{label}</p>}
   <slot />
   {href && <span class="card__arrow" aria-hidden="true"></span>}

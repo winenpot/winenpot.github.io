@@ -1,0 +1,101 @@
+---
+/**
+ * A small card that opens in place, inside an <ExpandGrid>. Its face is a
+ * clickable card (the title is a button stretched over the whole card);
+ * opening it expands the same element across the grid and reveals the
+ * panel: a close button, optional links, and the default slot.
+ *
+ * Slots
+ *  - face    : what the closed tile shows under the title (and keeps
+ *              showing, larger, when open)
+ *  - default : the panel body, only shown when open
+ *
+ * Hooks for ExpandGrid's script: .xtile (id = the URL hash), [data-xt-open],
+ * [data-xt-close], .xtile__panel, .xtile__title. Styles are global because
+ * Card renders the root element (scoped styles from here can't reach it).
+ */
+import Card from './Card.astro';
+type Tone = 'lavender' | 'periwinkle' | 'violet' | 'mauve' | 'starlight' | 'cobalt';
+interface Props {
+  id: string;
+  title: string;
+  tone?: Tone;
+  label?: string;
+  /** spans two columns on wide screens */
+  wide?: boolean;
+  backLabel: string;
+  links?: { label: string; href: string; external?: boolean }[];
+  /** for a <TagFilter target=".xtile"> on the page */
+  tags?: string[];
+}
+const { id, title, tone = 'violet', label, wide = false, backLabel, links = [], tags = [] } = Astro.props;
+const panelId = `${id}-panel`;
+---
+<Card tone={tone} label={label} class={`xtile card--link${wide ? ' xtile--wide' : ''}`} id={id} data-tags={tags.join('|')}>
+  <button type="button" class="btn-ghost xtile__back" data-xt-close><span class="arr arr--back" aria-hidden="true">←</span> {backLabel}</button>
+  <div class="xtile__face">
+    <h2 class="xtile__title" tabindex="-1">
+      <button type="button" class="xtile__open" data-xt-open aria-expanded="false" aria-controls={panelId}>{title}</button>
+    </h2>
+    <slot name="face" />
+  </div>
+  <span class="card__arrow" aria-hidden="true"></span>
+
+  <div class="xtile__panel" id={panelId} hidden>
+    {links.length > 0 && (
+      <div class="xtile__links">
+        {links.map((l) => l.external
+          ? <a class="btn-ghost" href={l.href} target="_blank" rel="noopener">{l.label} ↗</a>
+          : <a class="btn-ghost" href={l.href}>{l.label} <span class="arr">→</span></a>)}
+      </div>
+    )}
+    <slot />
+  </div>
+</Card>
+
+<style is:global>
+  @layer components {
+    .xtile { min-height: 15.5rem; scroll-margin-top: 6rem; /* clears the sticky nav on #deep-links */ }
+    @media (min-width: 900px) { .xtile--wide { grid-column: span 2; } }
+    .xtile__face { display: flex; flex-direction: column; gap: var(--s1); flex: 1; }
+    .xtile__title { font-size: var(--step-1); padding-right: 40px; outline: none; }
+    /* The title's button stretches over the whole card ("stretched link"):
+       the card is one big target, its accessible name is still the title. */
+    .xtile__open { all: unset; cursor: pointer; }
+    .xtile__open::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: var(--radius); }
+    .xtile__open:focus-visible::after { outline: 2px solid var(--starlight); outline-offset: 3px; }
+    /* helpers for face slots */
+    .xtile__clamp {
+      font-size: var(--step--1); line-height: 1.55;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
+    }
+    .xtile__bottom { margin-top: auto; }
+    .xtile__bottom .chip:nth-child(n + 4) { display: none; } /* at most three tags on a closed tile */
+
+    .xtile__panel { display: grid; gap: var(--s2); margin-top: var(--s2); }
+    .xtile__panel[hidden] { display: none; }
+    .xtile__links { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    /* back button: only on the open tile, top-right corner (on phones it
+       sits above the title, right-aligned, so it never covers the label) */
+    .xtile__back { display: none; }
+    .xtile[data-open] .xtile__back { display: inline-flex; align-self: flex-end; order: -1; z-index: 2; }
+    @media (min-width: 640px) {
+      .xtile[data-open] .xtile__back { position: absolute; top: var(--s2); right: var(--s2); }
+    }
+    .xtile__back:hover .arr--back { transform: translateX(-4px); }
+
+    /* ── open: the same card, now the whole workspace ── */
+    .xtile[data-open] { cursor: auto; }
+    .xtile[data-open]:hover, .xtile[data-open]:focus-within { transform: none; animation: none; }
+    .xtile[data-open] .card__arrow { display: none; }
+    .xtile[data-open] .xtile__open { cursor: text; user-select: text; }
+    .xtile[data-open] .xtile__open::after { display: none; }
+    .xtile[data-open] .xtile__title { font-size: var(--step-2); padding-right: 0; }
+    @media (min-width: 640px) { .xtile[data-open] .card__label { padding-right: 12rem; } }
+    .xtile[data-open] .xtile__clamp { font-size: var(--step-0); max-width: 70ch; -webkit-line-clamp: unset; line-clamp: unset; }
+    .xtile[data-open] .xtile__face { flex: none; }
+    .xtile[data-open] .xtile__bottom { margin-top: 0; }
+    .xtile[data-open] .xtile__bottom .chip { display: revert; }
+  }
+</style>

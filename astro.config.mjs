@@ -12,7 +12,8 @@ import { DEFAULT_LOCALE, LOCALE_CODES } from './src/i18n/locales.ts';
 export default defineConfig({
   site: SITE.url,
   trailingSlash: 'ignore',
-  integrations: [sitemap()],
+  // /admin (the CMS) is not part of the site: keep it out of the sitemap.
+  integrations: [sitemap({ filter: (page) => !new URL(page).pathname.startsWith('/admin') })],
   markdown: {
     remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex],

@@ -1,7 +1,7 @@
 ---
 project: winenpot.github.io
 type: project-home
-updated: 2026-10-14
+updated: 2026-10-31
 ---
 
 # winenpot.github.io — project home
@@ -28,7 +28,9 @@ that run on the page.
 
 - Astro 7, static output, pnpm. The project `.npmrc` points at registry.npmjs.org
   because the global mirror returns 402.
-- Content collections: `src/content/{writing,journal,work,lab}`. KaTeX math, Shiki code.
+- Content: everything addable lives in `src/content/` (how-to: its README); schemas in
+  `src/schemas.ts`. Web form at `/admin` (Sveltia CMS): see [[CMS]]. KaTeX math, Shiki code.
+- Demo proxy for keyed APIs: `proxy/` (Cloudflare Worker), see [[CMS]].
 - Deploy: GitHub Actions → GitHub Pages (`.github/workflows/deploy.yml`, Node 26).
 - Identity knobs: `src/config/site.ts`. Floating math figures: `src/config/figures.ts`.
 - Painted art (Higgsfield): `src/assets/art/`. Generation scripts: `assets/gen/`.

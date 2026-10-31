@@ -1,0 +1,242 @@
+# Sveltia CMS at /admin: a web form over the files in src/content/.
+# Every save is a commit to `main`, which deploys the site (~1 min).
+# Unfinished posts: tick "Draft" (hidden on the live site, shown on `pnpm dev`).
+#
+# This file mirrors src/schemas.ts. Add a field there → add it here too;
+# `pnpm run check:cms` fails CI when they drift apart.
+# The repo below is the only owner-specific value; a fork changes it.
+
+backend:
+  name: github
+  repo: winenpot/winenpot.github.io
+  branch: main
+  # Sign in with a fine-grained personal access token (this repo only,
+  # Contents: read & write). No OAuth server needed on a static host.
+  auth_methods: [token]
+  commit_messages:
+    create: "📝 Add {{collection}} “{{slug}}” (via /admin)"
+    update: "✏️ Update {{collection}} “{{slug}}” (via /admin)"
+    delete: "🗑️ Delete {{collection}} “{{slug}}” (via /admin)"
+    uploadMedia: "🖼️ Upload “{{path}}” (via /admin)"
+    deleteMedia: "🗑️ Delete “{{path}}” (via /admin)"
+
+site_url: https://winenpot.github.io
+display_url: https://winenpot.github.io
+media_folder: public/uploads
+public_folder: /uploads
+slug: { encoding: ascii, clean_accents: true }
+
+collections:
+  - name: writing
+    label: Writing
+    label_singular: Essay
+    folder: src/content/writing
+    create: true
+    slug: "{{slug}}"
+    sortable_fields: [date, title]
+    summary: "{{title}} · {{date}}"
+    fields:
+      - { name: title, label: Title, widget: string }
+      - { name: description, label: Description, widget: text }
+      - { name: date, label: Date, widget: datetime, time_format: false, format: YYYY-MM-DD, date_format: YYYY-MM-DD }
+      - { name: updated, label: Updated, widget: datetime, time_format: false, format: YYYY-MM-DD, date_format: YYYY-MM-DD, required: false }
+      - { name: tags, label: Tags, widget: list, required: false, default: [] }
+      - { name: draft, label: Draft (hidden on the live site), widget: boolean, default: false, required: false }
+      - { name: sample, label: Sample (placeholder banner), widget: boolean, default: false, required: false }
+      - { name: body, label: Body, widget: markdown }
+
+  - name: journal
+    label: Journal
+    label_singular: Note
+    folder: src/content/journal
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    sortable_fields: [date, title]
+    summary: "{{title}} · {{date}}"
+    fields:
+      - { name: title, label: Title, widget: string }
+      - { name: date, label: Date, widget: datetime, time_format: false, format: YYYY-MM-DD, date_format: YYYY-MM-DD }
+      - { name: mood, label: Mood, widget: string, required: false }
+      - { name: tags, label: Tags, widget: list, required: false, default: [] }
+      - { name: draft, label: Draft (hidden on the live site), widget: boolean, default: false, required: false }
+      - { name: sample, label: Sample (placeholder banner), widget: boolean, default: false, required: false }
+      - { name: body, label: Body, widget: markdown }
+
+  - name: work
+    label: Work
+    label_singular: Job
+    folder: src/content/work
+    create: true
+    slug: "{{slug}}"
+    identifier_field: org
+    summary: "{{org}} · {{role}} · {{start}}"
+    sortable_fields: [start, org]
+    fields:
+      - { name: title, label: Case study title, widget: string }
+      - { name: org, label: Company, widget: string }
+      - { name: role, label: Role, widget: string }
+      - { name: start, label: Start (YYYY-MM), widget: string, pattern: ['^\d{4}-\d{2}$', 'Use YYYY-MM, e.g. 2025-02'] }
+      - { name: end, label: End (YYYY-MM, empty = current job), widget: string, required: false, pattern: ['^\d{4}-\d{2}$', 'Use YYYY-MM, e.g. 2025-02'] }
+      - { name: summary, label: Summary, widget: text }
+      - name: metrics
+        label: Metrics
+        widget: list
+        required: false
+        default: []
+        fields:
+          - { name: value, label: Value, widget: string, hint: "e.g. 10×" }
+          - { name: label, label: Label, widget: string, hint: "e.g. faster CI/CD" }
+      - { name: tags, label: Tags, widget: list, required: false, default: [] }
+      - { name: featured, label: Featured (wider tile), widget: boolean, default: false, required: false }
+      - { name: tone, label: Colour, widget: select, options: [lavender, periwinkle, violet, mauve, starlight, cobalt], required: false, hint: "Empty = cycles through the palette" }
+      - { name: draft, label: Draft (hidden on the live site), widget: boolean, default: false, required: false }
+      - { name: body, label: Case study, widget: markdown }
+
+  - name: lab
+    label: Lab
+    label_singular: Demo
+    folder: src/content/lab
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}} · {{kind}}"
+    sortable_fields: [order, title]
+    fields:
+      - { name: title, label: Title, widget: string }
+      - { name: description, label: Description, widget: text }
+      - name: kind
+        label: Kind
+        widget: select
+        options: [huggingface, gradio, streamlit, iframe, api, native]
+        hint: "huggingface → Space; gradio/streamlit/iframe → URL; api → URL + method + sample; native → component"
+      - { name: space, label: "Hugging Face Space (user/name)", widget: string, required: false }
+      - { name: url, label: URL, widget: string, required: false }
+      - { name: method, label: Method (api), widget: select, options: [POST, GET], default: POST, required: false }
+      - { name: sample, label: Sample request body (api, JSON), widget: code, default_language: json, output_code_only: true, required: false }
+      - { name: proxy, label: "Proxy route id (api; from proxy/routes.json, for APIs that need a key)", widget: string, required: false, pattern: ["^[a-z0-9-]+$", "lowercase letters, digits and dashes"] }
+      - name: inputs
+        label: Form fields (api)
+        widget: list
+        required: false
+        default: []
+        hint: "Without fields, visitors edit the raw JSON sample."
+        fields:
+          - { name: name, label: Name (sent as the JSON key), widget: string, pattern: ['^\w+$', 'letters, digits, underscore'] }
+          - { name: label, label: Label, widget: string }
+          - { name: type, label: Type, widget: select, options: [text, textarea, number, select], default: text, required: false }
+          - { name: default, label: Default value, widget: string, required: false }
+          - { name: options, label: Options (select), widget: list, required: false }
+      - { name: output, label: Show the reply as (api), widget: select, options: [json, text, image], default: json, required: false }
+      - { name: height, label: Embed height (px), widget: number, value_type: int, default: 620, required: false }
+      - { name: repo, label: Code repository URL, widget: string, required: false }
+      - { name: component, label: Native component, widget: string, required: false, hint: "File name in src/components/demos/ without .astro, e.g. TSpanner. Blank = empty template slot." }
+      - { name: tone, label: Colour, widget: select, options: [lavender, periwinkle, violet, mauve, starlight, cobalt], default: violet, required: false }
+      - { name: tags, label: Tags, widget: list, required: false, default: [] }
+      - { name: order, label: Order (smaller = earlier), widget: number, value_type: int, default: 0, required: false }
+      - { name: draft, label: Draft (hidden on the live site), widget: boolean, default: false, required: false }
+
+  - name: quotes
+    label: Footer quotes
+    label_singular: Quote
+    folder: src/content/quotes
+    extension: json
+    format: json
+    create: true
+    identifier_field: author
+    slug: "{{fields.author}}-{{uuid_short}}"
+    summary: "{{author}} · {{text}}"
+    fields:
+      - { name: text, label: Text (no quotation marks; new line = line break), widget: text }
+      - { name: author, label: Author, widget: string, hint: "Unknown speaker? e.g. Anonymous, quoted by …" }
+      - { name: source, label: Source, widget: string, required: false, hint: "Book, chapter, translator, year" }
+
+  - name: profile
+    label: Profile
+    editor: { preview: false }
+    files:
+      - name: now
+        label: Now (home page)
+        file: src/content/profile/now.yaml
+        fields:
+          - { name: items, label: What you're up to, widget: list, required: false, field: { name: line, label: Line, widget: string } }
+
+      - name: education
+        label: Education
+        file: src/content/profile/education.yaml
+        fields:
+          - name: items
+            label: Degrees
+            widget: list
+            required: false
+            fields:
+              - { name: degree, label: Degree, widget: string }
+              - { name: school, label: School, widget: string }
+              - { name: start, label: Start year, widget: string }
+              - { name: end, label: End year, widget: string, required: false }
+              - name: courses
+                label: Courses
+                widget: list
+                required: false
+                fields:
+                  - { name: name, label: Course, widget: string }
+                  - { name: grade, label: Grade, widget: string }
+
+      - name: certificates
+        label: Certificates
+        file: src/content/profile/certificates.yaml
+        fields:
+          - name: items
+            label: Certificates
+            widget: list
+            required: false
+            fields:
+              - { name: name, label: Name, widget: string }
+              - { name: issuer, label: Issuer, widget: string, required: false }
+              - { name: note, label: Note, widget: string, required: false, hint: "e.g. with honors" }
+
+      - name: publications
+        label: Publications
+        file: src/content/profile/publications.yaml
+        fields:
+          - name: items
+            label: Publications
+            widget: list
+            required: false
+            fields:
+              - { name: title, label: Title, widget: string }
+              - { name: kind, label: Kind, widget: string, hint: "e.g. Persian translation" }
+              - { name: note, label: Note, widget: string, required: false }
+              - { name: url, label: URL, widget: string, required: false }
+
+      - name: skills
+        label: Skills
+        file: src/content/profile/skills.yaml
+        fields:
+          - name: summary
+            label: Short stack (/about)
+            widget: list
+            required: false
+            fields:
+              - { name: group, label: Group, widget: string }
+              - { name: items, label: Skills, widget: list }
+          - name: full
+            label: Full tool list (résumé)
+            widget: list
+            required: false
+            fields:
+              - { name: group, label: Group, widget: string }
+              - { name: items, label: Skills, widget: list }
+
+      - name: interests
+        label: Interests
+        file: src/content/profile/interests.yaml
+        fields:
+          - { name: items, label: Loves, widget: list, required: false }
+
+      - name: about
+        label: About page
+        file: src/content/profile/about.md
+        fields:
+          - { name: lede, label: Line under the title, widget: string }
+          - { name: values, label: Values line, widget: string, required: false }
+          - { name: closing, label: Closing heading, widget: string }
+          - { name: body, label: The short version, widget: markdown }

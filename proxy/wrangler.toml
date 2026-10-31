@@ -1,0 +1,21 @@
+# Cloudflare Worker: the lab demos' API proxy. See README.md.
+name = "winenpot-demo-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[vars]
+# Pages allowed to call the proxy (comma-separated). Local dev adds
+# http://localhost:4321 through .dev.vars.
+ALLOWED_ORIGINS = "https://winenpot.github.io"
+
+# Per-IP, per-demo limit (handler.ts keys it "<ip>:<demo id>").
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+  [ratelimits.simple]
+  limit = 10
+  period = 60
+
+# Request logs (one JSON line each, no bodies or secrets) in Workers Logs.
+[observability]
+enabled = true

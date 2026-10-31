@@ -7,6 +7,9 @@
   img, svg, canvas, video, iframe { display: block; max-width: 100%; }
   button, input, textarea, select { font: inherit; color: inherit; }
   button { cursor: pointer; }
+  /* `hidden` must win over any component's display (cards are display:flex);
+     !important in the first layer beats every later layer. */
+  [hidden] { display: none !important; }
 }
 
 @layer base {

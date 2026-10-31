@@ -1,0 +1,49 @@
+---
+/**
+ * Tag chips that filter a list in place: "All" plus one chip per tag.
+ * Items are the elements matching `target`, each with data-tags="a|b|c"
+ * (pipe-separated, so tags may contain spaces). Used by /writing, /lab and
+ * /work. Renders nothing with fewer than two tags.
+ *
+ * - The choice is kept in ?tag= so a filtered view can be linked.
+ * - Fires `tagfilter:change` first, so an ExpandGrid closes an open tile
+ *   before the tiles around it disappear.
+ */
+import { t } from '../i18n/ui';
+interface Props { tags: string[]; target: string; label?: string }
+const { tags, target, label = 'Filter by tag' } = Astro.props;
+---
+{tags.length > 1 && (
+  <div class="filters chips" role="group" aria-label={label} data-tag-filter data-target={target}>
+    <button type="button" class="chip" aria-pressed="true" data-tag="">{t('all.tags')}</button>
+    {tags.map((x) => <button type="button" class="chip" aria-pressed="false" data-tag={x}>#{x}</button>)}
+  </div>
+)}
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-tag-filter]').forEach((bar) => {
+    const btns = [...bar.querySelectorAll<HTMLButtonElement>('[data-tag]')];
+    const items = () => document.querySelectorAll<HTMLElement>(bar.dataset.target!);
+
+    function apply(tag: string, updateUrl: boolean) {
+      if (tag && !btns.some((b) => b.dataset.tag === tag)) tag = '';
+      // only a click closes an open tile; a page load keeps a #deep-link open
+      if (updateUrl) bar.dispatchEvent(new CustomEvent('tagfilter:change', { bubbles: true, detail: { tag } }));
+      btns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tag === tag)));
+      items().forEach((el) => { el.hidden = !!tag && !(el.dataset.tags ?? '').split('|').includes(tag); });
+      if (updateUrl) {
+        const url = new URL(location.href);
+        if (tag) url.searchParams.set('tag', tag); else url.searchParams.delete('tag');
+        url.hash = '';
+        history.replaceState(null, '', url);
+      }
+    }
+    btns.forEach((b) => b.addEventListener('click', () => apply(b.dataset.tag!, true)));
+    const initial = new URLSearchParams(location.search).get('tag');
+    if (initial) apply(initial, false);
+  });
+</script>
+
+<style>
+  .filters { margin-bottom: var(--s3); }
+</style>

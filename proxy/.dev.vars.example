@@ -1,0 +1,5 @@
+# Copy to .dev.vars for `pnpm dev` (wrangler dev). Never commit .dev.vars.
+# Production values: ALLOWED_ORIGINS is in wrangler.toml [vars]; secrets are
+# set with `pnpm exec wrangler secret put ANTHROPIC_API_KEY`.
+ALLOWED_ORIGINS=https://winenpot.github.io,http://localhost:4321
+ANTHROPIC_API_KEY=

@@ -1,34 +1,78 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Card from '../../components/Card.astro';
+import ExpandGrid from '../../components/ExpandGrid.astro';
+import LabTile from '../../components/LabTile.astro';
 import DemoEmbed from '../../components/DemoEmbed.astro';
-import TSpanner from '../../components/demos/TSpanner.astro';
-import { getLab } from '../../lib/content';
+import TagFilter from '../../components/TagFilter.astro';
+import { getLab, labPageUrl, isTemplate, topTags } from '../../lib/content';
 import { t } from '../../i18n/ui';
 const demos = await getLab();
-/** kind: 'native' demos are hand-built components, not data-driven embeds. */
-const NATIVE: Record<string, typeof TSpanner> = { 't-spanner': TSpanner };
+const live = demos.filter((d) => !isTemplate(d)).length;
+
+/** kind: native — every file in src/components/demos/ registers itself under
+ *  its file name, so `component: TSpanner` renders demos/TSpanner.astro.
+ *  Its logic (demos/TSpanner.ts, if any) loads only when the tile opens. */
+const NATIVE = Object.fromEntries(
+  Object.entries(import.meta.glob<{ default: any }>('../../components/demos/*.astro', { eager: true }))
+    .map(([path, mod]) => [path.split('/').pop()!.replace(/\.astro$/, ''), mod.default]),
+);
+for (const d of demos) {
+  if (d.data.kind === 'native' && !NATIVE[d.data.component ?? '']) {
+    throw new Error(`lab/${d.id}: component "${d.data.component}" not found in src/components/demos/ (have: ${Object.keys(NATIVE).join(', ')})`);
+  }
+}
 ---
 <Base title="Lab" description="Live experiments: Hugging Face Spaces, Gradio, Streamlit and APIs, running right on the page.">
   <header class="page-head">
-    <p class="kicker">live experiments · {demos.length}</p>
+    <p class="kicker">live experiments · {live}</p>
     <h1><span class="wave-underline">Lab</span></h1>
-    <p>Things you can poke. Every demo runs live — press “wake it up” and give a sleepy free server a few seconds.</p>
+    <p>Things you can poke. Pick a tile to open it — hosted demos need a “wake it up” and a few seconds for a sleepy free server.</p>
   </header>
-  <div class="bento">
-    {demos.length ? demos.map((d) => {
-      const Native = d.data.kind === 'native' && d.data.component ? NATIVE[d.data.component] : undefined;
-      return Native ? <Native demo={d} /> : <DemoEmbed demo={d} />;
-    }) : (
+  <TagFilter tags={topTags(demos.map((d) => d.data.tags))} target=".xtile" />
+  {demos.length ? (
+    <ExpandGrid>
+      {demos.map((d) => {
+        const Native = d.data.kind === 'native' ? NATIVE[d.data.component!] : undefined;
+        return (
+          <LabTile demo={d} page={labPageUrl(d.data)}>
+            {Native ? <Native demo={d} /> : <DemoEmbed demo={d} />}
+          </LabTile>
+        );
+      })}
+    </ExpandGrid>
+  ) : (
+    <div class="bento">
       <Card tone="violet" span="m6 l12" label="workbench" class="empty">
         <div class="empty__slots" aria-hidden="true">
           {['huggingface', 'gradio', 'streamlit', 'api'].map((k) => <span><i></i>{k}</span>)}
         </div>
         <p class="empty__text">{t('lab.empty')}</p>
       </Card>
-    )}
-  </div>
+    </div>
+  )}
 </Base>
+
+<script>
+  /**
+   * Native demos ship as markup (demos/<Name>.astro, root [data-demo="<Name>"])
+   * plus optional logic (demos/<Name>.ts, `export function mount(root)`).
+   * The glob is lazy, so Vite emits one chunk per demo and the page only
+   * downloads a demo's code the first time its tile opens. With 100 demos,
+   * /lab still loads none of them.
+   */
+  const loaders = import.meta.glob<{ mount: (root: HTMLElement) => void }>('../../components/demos/*.ts');
+  function mountIn(tile: Element) {
+    const root = tile.querySelector<HTMLElement>('[data-demo]:not([data-mounted])');
+    const load = root && loaders[`../../components/demos/${root.dataset.demo}.ts`];
+    if (!root || !load) return;
+    root.dataset.mounted = '';
+    load().then((m) => m.mount(root));
+  }
+  document.addEventListener('xtile:open', (e) => mountIn(e.target as Element));
+  // a #deep-link may have opened a tile before this script ran
+  document.querySelectorAll('.xtile[data-open]').forEach(mountIn);
+</script>
 
 <style>
   .empty { padding-block: var(--s5); gap: var(--s3); }

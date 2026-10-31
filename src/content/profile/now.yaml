@@ -1,0 +1,5 @@
+# Home page "Now" card: what you're up to lately. One line each, newest first.
+items:
+  - "Building a calm study system: Anki + Notion + small local LLMs"
+  - "Learning Rust, one borrow-checker argument at a time"
+  - "Reading on cognitive science and the geometry of thought"

@@ -1,0 +1,26 @@
+---
+/**
+ * /admin: Sveltia CMS, a web form over src/content/. It runs entirely in
+ * the browser and commits to GitHub through its API; the config is
+ * public/admin/config.yml (served next to this page). Bundled from npm by
+ * Vite, so nothing loads from a CDN. Not part of the site: no layout, not
+ * indexed, left out of the sitemap (astro.config.mjs).
+ */
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="same-origin" />
+    <title>Admin · winenpot</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <script>
+      import CMS from '@sveltia/cms';
+      CMS.init();
+    </script>
+  </body>
+</html>

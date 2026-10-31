@@ -1,0 +1,11 @@
+# Shown on /about and the résumé. `issuer` and `note` are optional.
+items:
+  - { name: Machine Learning Engineering in Production (MLOps), issuer: DeepLearning.AI }
+  - { name: Deep Learning Specialization, issuer: DeepLearning.AI }
+  - { name: Generative AI Software Development, issuer: DeepLearning.AI }
+  - { name: Machine Learning, issuer: Stanford University }
+  - { name: IBM Data Science Professional Certificate }
+  - { name: Google Advanced Data Analytics }
+  - { name: Applied Data Science I & II, issuer: WorldQuant University, note: with honors }
+  - { name: Automate the Boring Stuff with Python, issuer: Udemy }
+  - { name: MCTS, issuer: Mojtama Fani-e-Tehran }

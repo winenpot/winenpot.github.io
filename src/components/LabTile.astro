@@ -1,0 +1,25 @@
+---
+/**
+ * One demo on /lab: an ExpandTile whose face is the demo's kind, a
+ * three-line description and a few tags, and whose panel is the demo
+ * itself (the slot).
+ */
+import type { CollectionEntry } from 'astro:content';
+import { t } from '../i18n/ui';
+import { isTemplate } from '../lib/content';
+import ExpandTile from './ExpandTile.astro';
+interface Props { demo: CollectionEntry<'lab'>; page?: string }
+const { demo, page } = Astro.props;
+const d = demo.data;
+const links = [
+  ...(page ? [{ label: t('lab.open'), href: page, external: true }] : []),
+  ...(d.repo ? [{ label: t('lab.code'), href: d.repo, external: true }] : []),
+];
+---
+<ExpandTile id={demo.id} title={d.title} tone={d.tone} label={isTemplate(demo) ? 'template' : d.kind} backLabel={t('lab.back')} links={links} tags={d.tags}>
+  <Fragment slot="face">
+    <p class="xtile__clamp muted">{d.description}</p>
+    {d.tags.length > 0 && <ul class="chips xtile__bottom" role="list">{d.tags.map((x) => <li class="chip">{x}</li>)}</ul>}
+  </Fragment>
+  <slot />
+</ExpandTile>

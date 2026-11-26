@@ -30,9 +30,9 @@ export const SITE = {
    * Import photos from assets/ above so Astro bundles them for deployment.
    * Shown in greyscale and revealed in color under the cursor.
    */
-  photo: { src: homePortrait.src, alt: 'Portrait of Ashkan in a white shirt' },
+  photo: { src: homePortrait.src, alt: 'Portrait of Ashkan in a red patterned shirt' },
   /** Second photo slot used on /about (same rules). */
-  aboutPhoto: { src: aboutPortrait.src, alt: 'Portrait of Ashkan in a yellow shirt' },
+  aboutPhoto: { src: aboutPortrait.src, alt: 'Portrait of Ashkan in a striped shirt' },
 
   hire: {
     headline: 'Have a problem worth modeling?',

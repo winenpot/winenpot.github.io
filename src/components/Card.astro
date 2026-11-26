@@ -44,6 +44,8 @@ const style = `--tone: var(--tone-${tone});${rows ? `grid-row: span ${rows};` : 
       text-decoration: none;
       transition: transform var(--dur) var(--ease-out), box-shadow var(--dur), background var(--dur);
       min-width: 0;
+      /* Keep decorative stars and figures behind, not through, the text. */
+      background-color: var(--night-1);
     }
     @media (min-width: 640px) { .card { padding: var(--s3); } }
     /* dashed inner "cut line" frame (govacho DNA) */
@@ -59,7 +61,7 @@ const style = `--tone: var(--tone-${tone});${rows ? `grid-row: span ${rows};` : 
     /* Clickable cards: bolder color, un-reduced ("baseline") transparency,
        visually lifted off the page — an outward shadow, like it floats. */
     .card--link {
-      background:
+      background-image:
         radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--tone) 22%, transparent), transparent 60%),
         linear-gradient(160deg, color-mix(in oklab, var(--night-3) 62%, transparent), var(--glass-bold));
       box-shadow:
@@ -87,7 +89,7 @@ const style = `--tone: var(--tone-${tone});${rows ? `grid-row: span ${rows};` : 
     /* Static (non-clickable) cards: dimmer color, more transparent,
        visually low-lying — an inward shadow, like it's pressed into the page. */
     .card--static {
-      background:
+      background-image:
         radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--tone) 9%, transparent), transparent 60%),
         linear-gradient(160deg, color-mix(in oklab, var(--night-3) 28%, transparent), var(--glass-dim));
       box-shadow:

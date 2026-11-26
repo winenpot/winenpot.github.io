@@ -24,6 +24,28 @@ Back to [[README]]
 > native cursor stays on inputs, iframes, `[data-native-cursor]` and while a
 > modal dialog is open.
 
+## Current correction: a new Mars view on every load
+
+Implementation (2026-11-26; published through the GitHub Pages workflow on main):
+
+- Every refresh and page navigation selects another precomputed Mars observer
+  frame, excluding the immediately previous snapshot. Back/forward cache
+  restores also select a new view.
+- The observer is always on Mars, looking toward Earth. The existing data
+  contains 60 eligible Mars snapshots; the 60 Sahara snapshots remain in the
+  source data but are no longer selected.
+- Star catalogue coordinates, constellation connections, stereographic
+  projection, palette and painted backdrop stay unchanged. The whole observer
+  frame changes together; stars are not independently randomized.
+- `sessionStorage` now remembers only the previous index to avoid repeats,
+  rather than pinning a snapshot for the session. If storage is blocked the
+  sky still renders, but full-load repeat avoidance cannot be guaranteed.
+- `node scripts/check-sky.mjs` checks Mars-only selection and no consecutive
+  repeats. `node scripts/check-sky-browser.mjs` (Chrome CDP on port 9333)
+  verifies real refresh/link/back/forward changes, cached-page restoration,
+  reduced motion, mobile and blocked storage, including changed canvas pixels.
+- Preview: http://localhost:4321. Photo commit `63d89ed` is deployed separately.
+
 ## The idea (user's brief, 2026-10-22)
 
 Replace the random star field with the real sky, naked-eye view. The footer
@@ -65,7 +87,8 @@ paintings' rules. Sound: try it and see.
   **Painting rule:** the real planet sits on the painted planet's light
   beam (axis from (352, 910) in the 2048×1152 painting, 28° up-right),
   mapped through the image's `cover` + `30% 30%` fit.
-  Snapshot kept per session (`sessionStorage`), new one per visit.
+  Original behavior kept the snapshot per session; superseded by the
+  per-load, Mars-only correction above.
 - `Shore.astro`: caption under the Khayyam quote ("Overhead: the real sky
   above …") + "Show me another sky ↻" (44 px).
 - Perf (prod preview, 1440×900, 2.5 s): idle p95 6.2 ms, main thread

@@ -4,12 +4,12 @@ import { t } from '../i18n/ui';
 const mailto = `mailto:${SITE.email}?subject=${encodeURIComponent(SITE.hire.emailSubject)}`;
 const linkedin = SITE.links.find((l) => l.icon === 'linkedin');
 ---
-<dialog id="hire-dialog" class="hire-dialog" aria-labelledby="hire-title">
+<dialog id="hire-dialog" class="hire-dialog" aria-labelledby="hire-title" aria-describedby="hire-description">
   <div class="hire-dialog__card">
     <button type="button" class="hire-dialog__close" data-hire-close aria-label={t('hire.close')}>×</button>
     <p class="kicker"><b>●</b> {SITE.hire.availability}</p>
     <h2 id="hire-title">{SITE.hire.headline}</h2>
-    <p class="hire-dialog__blurb">{SITE.hire.blurb}</p>
+    <p id="hire-description" class="hire-dialog__blurb">{SITE.hire.blurb}</p>
     <ul class="chips" role="list">
       {SITE.hire.offers.map((o) => <li class="chip">{o}</li>)}
     </ul>
@@ -20,6 +20,7 @@ const linkedin = SITE.links.find((l) => l.icon === 'linkedin');
       <a class="btn-ghost" href="/resume/">{t('hire.resume')}</a>
     </div>
     <p class="mono muted hire-dialog__mail">{SITE.email}</p>
+    <p class="hire-dialog__status" role="status" aria-atomic="true" data-copy-status></p>
   </div>
 </dialog>
 
@@ -34,10 +35,18 @@ const linkedin = SITE.links.find((l) => l.icon === 'linkedin');
     if (target.closest('[data-hire-close]') || target === dlg) dlg.close();
     const copy = target.closest<HTMLButtonElement>('[data-copy]');
     if (copy) {
-      navigator.clipboard?.writeText(copy.dataset.copy!).then(() => {
-        const span = copy.querySelector('span')!;
+      const status = dlg.querySelector<HTMLElement>('[data-copy-status]')!;
+      const span = copy.querySelector('span')!;
+      status.textContent = '';
+      Promise.resolve().then(() => {
+        if (!navigator.clipboard) throw new Error('Clipboard unavailable');
+        return navigator.clipboard.writeText(copy.dataset.copy!);
+      }).then(() => {
         span.textContent = t('hire.copied');
+        status.textContent = t('hire.copySuccess');
         setTimeout(() => (span.textContent = t('hire.copy')), 1800);
+      }).catch(() => {
+        status.textContent = t('hire.copyFailure');
       });
     }
   });

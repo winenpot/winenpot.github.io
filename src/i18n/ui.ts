@@ -14,6 +14,8 @@ export const ui = {
     'hire.email': 'Write me an email',
     'hire.copy': 'Copy address',
     'hire.copied': 'Copied ✓',
+    'hire.copySuccess': 'Email address copied to clipboard.',
+    'hire.copyFailure': 'Could not copy automatically. Select the email address below, or use the email link.',
     'hire.resume': 'View résumé',
     'hire.close': 'Close',
     'home.readWriting': 'Read the writing',

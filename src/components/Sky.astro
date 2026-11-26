@@ -3,12 +3,11 @@
  * The fixed backdrop: a painted symbolist sky (Higgsfield, Ciurlionis x
  * Feininger) under the real night sky.
  *
- * Each visit picks one of 120 precomputed moments from src/data/sky.json
- * (built by assets/gen/sky/build_sky.py): either a Sahara dune field
- * looking up at Mars, or a Martian dune field / landing site looking up at
- * Earth. The stars are the same from both, so only the planet and the
- * caption change. The pick is kept for the session so the sky doesn't jump
- * between pages.
+ * Each page load picks a new precomputed Martian night from src/data/sky.json
+ * (built by assets/gen/sky/build_sky.py), looking up at Earth from a Martian
+ * dune field / landing site. Only the previous index is kept, to avoid an
+ * immediate repeat on refresh or navigation. Stars retain their catalogue
+ * coordinates; the observer's frame changes, not the constellation geometry.
  *
  * Stars sit where they really are (stereographic projection, the way
  * planetariums draw: it keeps constellation shapes true), with the horizon
@@ -34,6 +33,7 @@ import skyTop from '../assets/art/sky-top.png';
 
 <script>
   import sky from '../data/sky.json';
+  import { selectSkySnapshot } from '../lib/sky-snapshot';
 
   type Vec = [number, number, number];
   type Seg = [number, number, number, number];
@@ -69,13 +69,10 @@ import skyTop from '../assets/art/sky-top.png';
     scol.push(bv < 0.05 ? COL.cool : bv > 1.1 ? COL.warm : COL.pearl);
   }
 
-  // ── which moment: one per visit, kept across pages ─────────────────────
+  // ── a different Martian observer frame on every page load ──────────────
   const KEY = 'sky:snap';
-  const pick = (not = -1) => { let i; do i = Math.floor(Math.random() * sky.snaps.length); while (i === not && sky.snaps.length > 1); return i; };
-  let snapIndex = (() => {
-    try { const n = Number(sessionStorage.getItem(KEY) ?? 'x'); if (Number.isInteger(n) && n >= 0 && n < sky.snaps.length) return n; } catch {}
-    return pick();
-  })();
+  const readPrevious = () => { try { return sessionStorage.getItem(KEY); } catch { return null; } };
+  let snapIndex = selectSkySnapshot(sky.snaps, readPrevious());
   const remember = () => { try { sessionStorage.setItem(KEY, String(snapIndex)); } catch {} };
   remember();
 
@@ -114,6 +111,8 @@ import skyTop from '../assets/art/sky-top.png';
 
   function layout() {
     const snap = sky.snaps[snapIndex];
+    c.dataset.snapshot = String(snapIndex);
+    c.dataset.world = snap.world;
     M = snap.m;
     const aspect = W / H;
     // wide desktop: ~115 deg across, horizon to 76 deg up; phone: ~43 deg across, up to the zenith
@@ -298,6 +297,14 @@ import skyTop from '../assets/art/sky-top.png';
   resize();
   document.fonts?.ready.then(() => { paintBase(); queue(); });
   addEventListener('resize', resize);
+  // Back/forward cache restores do not rerun the module, but still need a new view.
+  addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    snapIndex = selectSkySnapshot(sky.snaps, readPrevious() ?? String(snapIndex));
+    remember();
+    meteors.length = 0;
+    resize();
+  });
   addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.moved = true; if (reduce) queue(); }, { passive: true });
   document.addEventListener('pointerleave', () => { mouse.x = mouse.y = -999; mouse.moved = true; if (reduce) queue(); });
   addEventListener('thinker:lookup', () => shoot());

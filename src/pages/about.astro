@@ -59,7 +59,8 @@ const courses = education.data.items.flatMap((e) => e.courses);
 </Base>
 
 <style>
-  .about-photo { padding: var(--s1); min-height: 460px; }
+  .about-photo { padding: var(--s1); min-height: 460px; max-height: 560px; }
+  .about-photo :global(.arch img) { object-position: 65% center; }
   .grades { list-style: none; padding: 0; display: grid; gap: 8px; }
   .grades li { display: flex; justify-content: space-between; gap: var(--s1); border-bottom: 1px dashed var(--line); padding-bottom: 6px; font-size: 0.95rem; }
   .grades b { font-family: var(--font-mono); font-weight: 500; color: var(--starlight); }

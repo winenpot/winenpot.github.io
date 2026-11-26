@@ -4,6 +4,9 @@
 //  elsewhere. See AGENTS.md for the full knob map.
 // ─────────────────────────────────────────────────────────────────────
 
+import homePortrait from '../../assets/photo_2026-11-26_10-34-51.jpg';
+import aboutPortrait from '../../assets/photo_2026-11-26_10-35-37.jpg';
+
 export const SITE = {
   url: 'https://winenpot.github.io',
   name: 'Vincent Law',
@@ -24,13 +27,12 @@ export const SITE = {
 
   /**
    * Your portrait. Leave `src` empty to show the painted-arch placeholder.
-   * To switch: drop a photo at public/me.jpg (portrait, ~1200px tall) and
-   * set src: '/me.jpg'. It is shown in greyscale and revealed in color
-   * under the cursor.
+   * Import photos from assets/ above so Astro bundles them for deployment.
+   * Shown in greyscale and revealed in color under the cursor.
    */
-  photo: { src: '', alt: 'Portrait of Ashkan' },
+  photo: { src: homePortrait.src, alt: 'Portrait of Ashkan in a white shirt' },
   /** Second photo slot used on /about (same rules). */
-  aboutPhoto: { src: '', alt: 'Ashkan, at work' },
+  aboutPhoto: { src: aboutPortrait.src, alt: 'Portrait of Ashkan in a yellow shirt' },
 
   hire: {
     headline: 'Have a problem worth modeling?',

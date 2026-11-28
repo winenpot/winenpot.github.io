@@ -13,7 +13,7 @@ export const SITE = {
   firstName: 'Ashkan',
   lastName: 'Ranjbar',
   handle: 'winenpot',
-  role: 'Applied mathematician · ML engineer',
+  role: 'Senior Full-stack AI Engineer',
   tagline:
     'I translate messy business problems into data-driven systems — using math, with love.',
   intro:
@@ -61,7 +61,7 @@ export const SITE = {
 
   /** Résumé header: the line under your name, and the one-line summary. */
   resume: {
-    headline: 'Machine Learning Engineer · Web Developer',
+    headline: 'Senior Full-stack AI Engineer',
     summary: 'I enjoy translating business problems into data-driven software solutions using math <3',
   },
 

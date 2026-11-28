@@ -1,86 +1,145 @@
 ---
-/**
- * Career as a wave: numbered stars sit on a slow sine curve from the first
- * start date to today; a legend below names each one. Hovering either
- * lights up its twin. Fed by the `work` collection. On phones only the
- * legend shows.
- */
+/** A shared calendar axis with one static, selectable ribbon per work record. */
 import { fmtMonth, type Work } from '../lib/content';
+import { month, monthString, axisX, ribbon, allocateLanes, baseWave } from '../scripts/timeline-geometry';
 interface Props { items: Work[] }
 const { items } = Astro.props;
 const asc = [...items].sort((a, b) => a.data.start.localeCompare(b.data.start));
-const toN = (ym: string) => { const [y, m] = ym.split('-').map(Number); return y + (m - 1) / 12; };
 const now = new Date();
-const n0 = Math.floor(toN(asc[0]?.data.start ?? '2020-01')), n1 = now.getFullYear() + now.getMonth() / 12 + 0.25;
-const X = (ym: string) => 2 + ((toN(ym) - n0) / (n1 - n0)) * 96;
-const Y = (x: number) => 50 + 30 * Math.sin((x / 100) * Math.PI * 3.2 + 0.4);
-const path = Array.from({ length: 101 }, (_, i) => `${i ? 'L' : 'M'}${i * 10} ${Y(i).toFixed(2)}`).join(' ');
-const years = Array.from({ length: Math.ceil(n1) - n0 }, (_, i) => n0 + i);
+const current = now.getFullYear() * 12 + now.getMonth();
+const first = asc.length ? Math.floor(month(asc[0].data.start) / 12) * 12 : current;
+const last = Math.max(current + 1, ...asc.map(w => month(w.data.end ?? monthString(current)) + 1), first + 1);
+const years = Array.from({ length: Math.ceil((last - first) / 12) }, (_, i) => first / 12 + i);
+const lanes = allocateLanes(asc.map(w => ({ start: w.data.start, end: w.data.end })), current);
+const ribbons = asc.map((w, i) => ribbon(w.data.start, w.data.end, first, last, current, lanes[i]));
+// Keep unusually large numbers of simultaneous jobs inside the drawing area.
+const extra = Math.max(0, 4 + Math.floor(Math.max(0, ...lanes) / 2) * 7 - 16);
 ---
 <div class="tl" data-tl>
-  <div class="tl__wave" aria-hidden="true">
-    <svg viewBox="0 0 1000 100" preserveAspectRatio="none">
-      <path d={path} class="tl__glow" />
-      <path d={path} class="tl__path" />
+  <div class="tl__wave" aria-hidden="true" style={`--tl-extra:${extra}`}>
+    <svg viewBox={`0 ${-extra} 1000 ${100 + 2 * extra}`} preserveAspectRatio="none">
+      <path d={baseWave} class="tl__glow" />
+      <path d={baseWave} class="tl__path" />
+      {asc.map((w, i) => (
+        <g class="tl__ribbon" data-ribbon={i} data-tone={i % 3}>
+          <path class="tl__stroke" data-work={w.id} data-start={w.data.start} data-end-exclusive={ribbons[i].end} data-lane={lanes[i]} d={ribbons[i].d} />
+          <path class="tl__stripe" d={ribbons[i].d} />
+          <path class="tl__hit" d={ribbons[i].d} />
+        </g>
+      ))}
     </svg>
-    {years.map((y) => <span class="tl__year" style={`left:${2 + ((y - n0) / (n1 - n0)) * 96}%`}>{y}</span>)}
-    {asc.map((w, i) => {
-      const x = X(w.data.start);
-      return <a class="tl__dot" href={`/work/${w.id}/`} tabindex="-1" data-i={i} style={`left:${x}%; top:${Y(x)}%`}>{i + 1}</a>;
-    })}
+    {ribbons.map((r, i) => [
+      <span class="tl__marker" data-marker={`${i}-start`} data-tone={i % 3} style={`left:${r.startX / 10}%;top:${(r.startY + extra) / (100 + 2 * extra) * 100}%`} />,
+      <span class="tl__marker" data-marker={`${i}-end`} data-tone={i % 3} style={`left:${r.endX / 10}%;top:${(r.endY + extra) / (100 + 2 * extra) * 100}%`} />,
+    ])}
+    {years.map((y, i) => <span class:list={['tl__year', { 'tl__year--alternate': i % 2 === 1 }]} style={`left:${axisX(y * 12, first, last) / 10}%`}>{y}</span>)}
   </div>
   <ol class="tl__legend" role="list">
     {asc.map((w, i) => (
-      <li data-i={i}>
-        <a href={`/work/${w.id}/`}>
+      <li data-entry={i}>
+        <button class="tl__select" type="button" data-select={i} aria-pressed="false" hidden>
           <span class="tl__n" aria-hidden="true">{i + 1}</span>
-          <span class="tl__text">
-            <b>{w.data.org}</b>
-            <span>{w.data.role}</span>
-            <time class="kicker">{fmtMonth(w.data.start)}</time>
-          </span>
-        </a>
+          <span class="tl__text"><b>{w.data.org}</b><span>{w.data.role}</span><span class="kicker">{fmtMonth(w.data.start)} – {w.data.end ? fmtMonth(w.data.end) : 'Present'}</span></span>
+        </button>
+        <a class="tl__work-link" href={`/work/${w.id}/`}>View {w.data.org} work <span aria-hidden="true">↗</span></a>
+        <div class="tl__detail" data-detail={i} hidden>
+          <strong>{w.data.org}</strong><span>{w.data.role}</span>
+          <span>{fmtMonth(w.data.start)} – {w.data.end ? fmtMonth(w.data.end) : 'Present'}</span>
+          <a href={`/work/${w.id}/`}>View work ↗</a>
+          <button type="button" data-dismiss>Close details</button>
+        </div>
       </li>
     ))}
   </ol>
 </div>
 
 <script>
-  document.querySelectorAll<HTMLElement>('[data-tl]').forEach((tl) => {
-    const all = tl.querySelectorAll<HTMLElement>('[data-i]');
-    const set = (i: string | null) => all.forEach((el) => el.classList.toggle('is-hot', el.dataset.i === i));
-    all.forEach((el) => {
-      el.addEventListener('pointerenter', () => set(el.dataset.i!));
-      el.addEventListener('pointerleave', () => set(null));
-      el.addEventListener('focusin', () => set(el.dataset.i!));
-      el.addEventListener('focusout', () => set(null));
+  function initTimelines() {
+    document.querySelectorAll<HTMLElement>('[data-tl]:not([data-ready])').forEach((tl) => {
+      tl.dataset.ready = 'true';
+      const ribbons = [...tl.querySelectorAll<SVGGElement>('[data-ribbon]')];
+      const entries = [...tl.querySelectorAll<HTMLElement>('[data-entry]')];
+      const buttons = [...tl.querySelectorAll<HTMLButtonElement>('[data-select]')];
+      const details = [...tl.querySelectorAll<HTMLElement>('[data-detail]')];
+      let selected: string | null = null;
+      let preview: string | null = null;
+      const paint = () => {
+        const active = preview ?? selected;
+        ribbons.forEach((r) => {
+          r.classList.toggle('is-hot', r.dataset.ribbon === active);
+          r.classList.toggle('is-selected', r.dataset.ribbon === selected);
+        });
+        entries.forEach((e) => e.classList.toggle('is-hot', e.dataset.entry === active));
+        buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.select === selected)));
+        details.forEach((d) => { d.hidden = d.dataset.detail !== selected; });
+      };
+      const select = (i: string | null) => {
+        selected = selected === i ? null : i;
+        preview = null;
+        const front = ribbons.find((r) => r.dataset.ribbon === selected);
+        if (front && front.parentElement?.lastElementChild !== front) front.parentNode?.appendChild(front);
+        paint();
+      };
+      buttons.forEach((button) => {
+        button.hidden = false;
+        button.addEventListener('click', () => select(button.dataset.select ?? null));
+        button.addEventListener('pointerenter', (event) => { if (event.pointerType !== 'touch') { preview = button.dataset.select ?? null; paint(); } });
+        button.addEventListener('pointerleave', () => { preview = null; paint(); });
+        button.addEventListener('focus', () => { preview = button.dataset.select ?? null; paint(); });
+        button.addEventListener('blur', () => { preview = null; paint(); });
+      });
+      ribbons.forEach((r) => {
+        r.addEventListener('pointerenter', (event) => { if (event.pointerType !== 'touch') { preview = r.dataset.ribbon ?? null; paint(); } });
+        r.addEventListener('pointerleave', () => { preview = null; paint(); });
+        r.addEventListener('click', () => select(r.dataset.ribbon ?? null));
+      });
+      tl.querySelectorAll<HTMLButtonElement>('[data-dismiss]').forEach((b) => b.addEventListener('click', () => {
+        const previous = selected; selected = null; preview = null; paint();
+        buttons.find(button => button.dataset.select === previous)?.focus();
+      }));
+      tl.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && selected !== null) {
+          const previous = selected; selected = null; preview = null; paint();
+          buttons.find(b => b.dataset.select === previous)?.focus();
+        }
+      });
     });
-  });
+  }
+  document.addEventListener('astro:page-load', initTimelines);
+  initTimelines();
 </script>
 
 <style>
-  .tl { display: grid; gap: var(--s4); }
-  .tl__wave { display: none; }
-  .tl__legend { list-style: none; padding: 0; display: grid; gap: 4px var(--s2); grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
-  .tl__legend a { display: flex; gap: 12px; align-items: flex-start; padding: 8px; margin: -8px 0 0 -8px; border-radius: 12px; color: var(--ink); text-decoration: none; transition: background 250ms; }
-  .tl__legend .is-hot a, .tl__legend a:hover { background: color-mix(in oklab, var(--periwinkle) 14%, transparent); }
-  .tl__n, .tl__dot {
-    flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
-    font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500;
-    background: var(--starlight); color: var(--night-0); box-shadow: 0 0 14px color-mix(in oklab, var(--starlight) 70%, transparent);
-  }
-  .tl__text { display: grid; line-height: 1.3; }
+  .tl { display: grid; gap: var(--s2); }
+  .tl__wave { display: block; position: relative; height: calc(130px + var(--tl-extra) * 2px); margin-bottom: 22px; }
+  .tl__wave svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .tl__path, .tl__glow { fill: none; vector-effect: non-scaling-stroke; pointer-events: none; }
+  .tl__path { stroke: var(--periwinkle); stroke-width: 1.4; stroke-dasharray: 6 6; }
+  .tl__glow { stroke: var(--lavender); stroke-width: 8; opacity: .12; }
+  .tl__stroke, .tl__stripe, .tl__hit { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+  .tl__stroke { stroke: var(--periwinkle); stroke-width: 5; opacity: .7; }
+  .tl__ribbon[data-tone='1'] .tl__stroke { stroke: var(--mauve); }
+  .tl__ribbon[data-tone='2'] .tl__stroke { stroke: var(--lavender); }
+  .tl__stripe { stroke: var(--pearl); stroke-width: 3; stroke-dasharray: 2 7; stroke-linecap: butt; opacity: .8; pointer-events: none; }
+  .tl__marker { position: absolute; width: 7px; height: 7px; border: 1px solid var(--pearl); border-radius: 50%; background: var(--periwinkle); transform: translate(-50%, -50%); pointer-events: none; }
+  .tl__marker[data-tone='1'] { background: var(--mauve); }
+  .tl__marker[data-tone='2'] { background: var(--lavender); }
+  .tl__hit { stroke: transparent; stroke-width: 8; cursor: pointer; }
+  .tl__ribbon.is-hot .tl__stroke, .tl__ribbon.is-selected .tl__stroke { stroke-width: 6; opacity: 1; }
+  .tl__year { position: absolute; bottom: -22px; transform: translateX(-50%); font-family: var(--font-mono); font-size: .72rem; color: var(--ink-mute); }
+  .tl__legend { list-style: none; padding: 0; margin: 0; column-width: 210px; column-gap: var(--s2); }
+  .tl__legend li { display: inline-block; width: 100%; min-width: 0; margin-bottom: var(--s0); border-radius: 12px; break-inside: avoid; }
+  .tl__legend li.is-hot { background: color-mix(in oklab, var(--periwinkle) 14%, transparent); }
+  .tl__select { width: 100%; min-height: 44px; display: flex; text-align: left; gap: 12px; align-items: flex-start; padding: 8px; border: 0; border-radius: 12px; background: transparent; color: var(--ink); font: inherit; cursor: pointer; }
+  .tl__select[hidden], .tl__detail[hidden] { display: none; }
+  .tl__n { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-family: var(--font-mono); font-size: .72rem; font-weight: 500; background: var(--starlight); color: var(--night-0); }
+  .tl__text { min-width: 0; display: grid; line-height: 1.3; overflow-wrap: anywhere; }
   .tl__text b { font-weight: 500; color: var(--pearl); }
-  .tl__text span { color: var(--ink-soft); font-size: 0.88rem; }
-  .tl__text time { font-size: 0.72rem; }
-
-  @media (min-width: 900px) {
-    .tl__wave { display: block; position: relative; height: 150px; }
-    .tl__wave svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-    .tl__path { fill: none; stroke: var(--periwinkle); stroke-width: 1.4; vector-effect: non-scaling-stroke; stroke-dasharray: 6 6; }
-    .tl__glow { fill: none; stroke: var(--lavender); stroke-width: 8; vector-effect: non-scaling-stroke; opacity: 0.12; }
-    .tl__year { position: absolute; bottom: -22px; transform: translateX(-50%); font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-mute); }
-    .tl__dot { position: absolute; translate: -50% -50%; text-decoration: none; transition: transform 400ms var(--ease-spring); }
-    .tl__dot.is-hot, .tl__dot:hover { transform: scale(1.35); color: var(--night-0); }
-  }
+  .tl__text span { color: var(--ink-soft); font-size: .88rem; }
+  .tl__text .kicker { font-size: .72rem; }
+  .tl__work-link { display: inline-flex; align-items: center; min-height: 44px; padding: 4px 8px; font-size: .82rem; }
+  .tl__detail { display: grid; gap: 4px; margin: 0 8px 8px; padding: 12px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--glass-strong); overflow-wrap: anywhere; }
+  .tl__detail button { min-height: 44px; justify-self: start; color: var(--ink); background: transparent; border: 0; padding: 0; text-decoration: underline; cursor: pointer; font: inherit; }
+  @media (max-width: 600px) { .tl__year--alternate { display: none; } }
+  @media (min-width: 900px) { .tl__wave { height: calc(150px + var(--tl-extra) * 2px); } }
 </style>
